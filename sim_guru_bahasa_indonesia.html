@@ -1,0 +1,2803 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIM-Guru Bahasa Indonesia SMA | Manajemen Kelas, Presensi, LKPD & Asesmen</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #print-area, #print-area * {
+        visibility: visible !important;
+      }
+      #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        color: black !important;
+        padding: 24px;
+        display: block !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <!-- Brand & School Info -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-600/20">
+            <i data-lucide="book-open-check" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-bold text-base sm:text-lg text-slate-900 leading-tight">SIM-GURU BAHASA INDONESIA</h1>
+              <span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-sky-200 uppercase tracking-wide">SMA / MA</span>
+            </div>
+            <p class="text-xs text-slate-500 flex items-center gap-1.5">
+              <span class="font-medium text-slate-700">Kurikulum Merdeka</span> • TP. 2026/2027
+            </p>
+          </div>
+        </div>
+
+        <!-- Global Selectors & Cloud Integrations -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Google Sheets Status Button -->
+          <button onclick="openGoogleSheetsModal()" id="btn-gsheets-header" class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition shadow-2xs group" title="Pengaturan Integrasi Google Sheets">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+            <span class="relative flex h-2 w-2">
+              <span id="gsheets-pulse" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 hidden"></span>
+              <span id="gsheets-dot" class="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
+            </span>
+            <span id="gsheets-header-text" class="hidden sm:inline text-[11px]">Google Sheets</span>
+          </button>
+
+          <!-- Quick Sync Button -->
+          <button onclick="handleQuickSync()" id="btn-quick-sync" title="Sinkronkan dengan Google Sheets" class="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition border border-slate-200">
+            <i data-lucide="cloud-upload" id="icon-quick-sync" class="w-4 h-4"></i>
+          </button>
+
+          <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200 text-xs">
+            <span class="px-2 font-semibold text-slate-500 hidden md:inline"><i data-lucide="users" class="w-3.5 h-3.5 inline mr-1"></i>Kelas:</span>
+            <select id="global-class-select" class="bg-white rounded-lg px-2.5 py-1.5 font-bold text-slate-800 shadow-2xs border-0 outline-none focus:ring-2 focus:ring-sky-500 text-xs cursor-pointer">
+              <!-- Rendered via JS -->
+            </select>
+          </div>
+
+          <button onclick="promptResetAllData()" title="Pengaturan Reset / Bersihkan Memori Lokal" class="p-2 text-slate-600 hover:text-rose-600 hover:bg-slate-100 rounded-xl transition">
+            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- App Tabs Navigation -->
+      <nav class="flex space-x-1 sm:space-x-3 border-t border-slate-100 overflow-x-auto py-2 no-print" id="tab-nav">
+        <button onclick="switchTab('absensi')" data-tab="absensi" class="tab-btn active px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition bg-sky-600 text-white shadow-xs whitespace-nowrap">
+          <i data-lucide="clipboard-check" class="w-4 h-4"></i> Presensi Harian
+        </button>
+        <button onclick="switchTab('rekap')" data-tab="rekap" class="tab-btn px-3.5 py-2 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition whitespace-nowrap">
+          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Rekapitulasi Presensi
+        </button>
+        <button onclick="switchTab('datasiswa')" data-tab="datasiswa" class="tab-btn px-3.5 py-2 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition whitespace-nowrap">
+          <i data-lucide="users" class="w-4 h-4"></i> Manajemen Kelas & Siswa
+        </button>
+        <button onclick="switchTab('materi')" data-tab="materi" class="tab-btn px-3.5 py-2 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition whitespace-nowrap">
+          <i data-lucide="book-marked" class="w-4 h-4"></i> LKPD & Materi Ajar
+        </button>
+        <button onclick="switchTab('soal')" data-tab="soal" class="tab-btn px-3.5 py-2 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition whitespace-nowrap">
+          <i data-lucide="help-circle" class="w-4 h-4"></i> Bank Soal & Asesmen
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- ============================================== -->
+    <!-- TAB 1: PRESENSI HARIAN SISWA                  -->
+    <!-- ============================================== -->
+    <section id="tab-content-absensi" class="tab-view block space-y-5">
+      <!-- Action and Filter Bar -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+        <div class="flex flex-wrap items-center gap-3">
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tanggal Pertemuan</label>
+            <input type="date" id="attendance-date" class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-sky-500 outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Materi / Elemen Pembelajaran</label>
+            <input type="text" id="attendance-topic" placeholder="Cth: Mengidentifikasi Ide Pokok Teks LHO" class="border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700 w-64 focus:ring-2 focus:ring-sky-500 outline-none">
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="markAllAttendance('H')" class="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="check-check" class="w-4 h-4"></i> Hadir Semua
+          </button>
+          <button onclick="saveAttendanceRecord()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-xs shadow-sky-600/30">
+            <i data-lucide="save" class="w-4 h-4"></i> Simpan Presensi
+          </button>
+        </div>
+      </div>
+
+      <!-- Attendance Stats Mini Pills -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-emerald-50/80 border border-emerald-100 rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <p class="text-[11px] font-semibold text-emerald-800 uppercase tracking-wide">Hadir (H)</p>
+            <p class="text-2xl font-bold text-emerald-700 mt-0.5" id="count-hadir">0</p>
+          </div>
+          <span class="p-2 bg-emerald-100 rounded-lg text-emerald-600"><i data-lucide="user-check" class="w-5 h-5"></i></span>
+        </div>
+        <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <p class="text-[11px] font-semibold text-blue-800 uppercase tracking-wide">Sakit (S)</p>
+            <p class="text-2xl font-bold text-blue-700 mt-0.5" id="count-sakit">0</p>
+          </div>
+          <span class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="activity" class="w-5 h-5"></i></span>
+        </div>
+        <div class="bg-amber-50/80 border border-amber-100 rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <p class="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">Izin (I)</p>
+            <p class="text-2xl font-bold text-amber-700 mt-0.5" id="count-izin">0</p>
+          </div>
+          <span class="p-2 bg-amber-100 rounded-lg text-amber-600"><i data-lucide="clock" class="w-5 h-5"></i></span>
+        </div>
+        <div class="bg-rose-50/80 border border-rose-100 rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <p class="text-[11px] font-semibold text-rose-800 uppercase tracking-wide">Alpa (A)</p>
+            <p class="text-2xl font-bold text-rose-700 mt-0.5" id="count-alpa">0</p>
+          </div>
+          <span class="p-2 bg-rose-100 rounded-lg text-rose-600"><i data-lucide="user-x" class="w-5 h-5"></i></span>
+        </div>
+      </div>
+
+      <!-- Student Attendance Table -->
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+        <div class="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200 flex justify-between items-center">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-xs uppercase tracking-wider text-slate-700">Daftar Kehadiran Siswa</span>
+            <span id="label-class-info" class="text-xs bg-slate-200 px-2 py-0.5 rounded text-slate-700 font-semibold">Kelas X-A</span>
+          </div>
+          <div class="text-xs text-slate-500 hidden sm:block">
+            Status: <span class="text-emerald-700 font-bold">Hadir</span>, <span class="text-blue-700 font-bold">Sakit</span>, <span class="text-amber-700 font-bold">Izin</span>, <span class="text-rose-700 font-bold">Alpa</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50/50 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-3 px-4 w-12 text-center">No</th>
+                <th class="py-3 px-4 w-28">NIS / NISN</th>
+                <th class="py-3 px-4">Nama Lengkap Siswa</th>
+                <th class="py-3 px-4 w-16 text-center">L/P</th>
+                <th class="py-3 px-4 w-64 text-center">Status Presensi</th>
+                <th class="py-3 px-4">Keterangan / Catatan Sikap</th>
+              </tr>
+            </thead>
+            <tbody id="attendance-table-body" class="divide-y divide-slate-100 text-slate-700">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TAB 2: REKAPITULASI PRESENSI                   -->
+    <!-- ============================================== -->
+    <section id="tab-content-rekap" class="tab-view hidden space-y-5">
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h2 class="text-sm font-bold text-slate-800">Laporan Rekapitulasi Presensi Kumulatif</h2>
+          <p class="text-xs text-slate-500" id="rekap-subtitle">Mata Pelajaran: Bahasa Indonesia | Kelas Aktif</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="exportAttendanceCSV()" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i> Ekspor CSV / Excel
+          </button>
+          <button onclick="printAttendanceReport()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="printer" class="w-4 h-4"></i> Cetak Format Dinas
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[10px] tracking-wider">
+                <th class="py-3 px-3 text-center w-10">No</th>
+                <th class="py-3 px-3 w-28">NIS / NISN</th>
+                <th class="py-3 px-4">Nama Siswa</th>
+                <th class="py-3 px-2 text-center text-emerald-700 bg-emerald-50/50 w-12">H</th>
+                <th class="py-3 px-2 text-center text-blue-700 bg-blue-50/50 w-12">S</th>
+                <th class="py-3 px-2 text-center text-amber-700 bg-amber-50/50 w-12">I</th>
+                <th class="py-3 px-2 text-center text-rose-700 bg-rose-50/50 w-12">A</th>
+                <th class="py-3 px-3 text-center w-24">Total Sesi</th>
+                <th class="py-3 px-4 w-40 text-center">% Kehadiran</th>
+                <th class="py-3 px-4 w-28 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="rekap-table-body" class="divide-y divide-slate-100 text-slate-700">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TAB 3: MANAJEMEN KELAS & SISWA (CRUD DINAMIS)  -->
+    <!-- ============================================== -->
+    <section id="tab-content-datasiswa" class="tab-view hidden space-y-5">
+      <!-- Toolbar: Add Class & Add Student -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Panel 1: Rombel / Manajemen Kelas -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <i data-lucide="layers" class="w-4 h-4 text-sky-600"></i> Rombongan Belajar (Kelas)
+            </h3>
+            <span class="text-xs bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full font-bold" id="total-classes-badge">0 Kelas</span>
+          </div>
+
+          <!-- Form Tambah Kelas Baru -->
+          <form onsubmit="handleAddNewClass(event)" class="space-y-3">
+            <div>
+              <label class="text-[11px] font-semibold text-slate-500 block mb-1">Nama Kelas / Rombel Baru</label>
+              <input type="text" id="input-new-class-name" required placeholder="Cth: X-C atau XI-F3" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 outline-none">
+            </div>
+            <div>
+              <label class="text-[11px] font-semibold text-slate-500 block mb-1">Tingkat Fase / Jenjang</label>
+              <select id="input-new-class-grade" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 outline-none">
+                <option value="10">Kelas 10 (Fase E)</option>
+                <option value="11">Kelas 11 (Fase F)</option>
+                <option value="12">Kelas 12 (Fase F Lanjut)</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="plus" class="w-4 h-4"></i> Tambah Kelas Baru
+            </button>
+          </form>
+
+          <!-- Daftar Rombel Tersedia -->
+          <div class="pt-2">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Daftar Kelas Terdaftar</label>
+            <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1" id="class-list-container">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2 & 3: Tabel Siswa di Kelas Terpilih -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col justify-between">
+          <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-sm text-slate-900" id="manage-student-class-title">Daftar Siswa Kelas X-A</h3>
+                <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold" id="manage-student-count">0 Siswa</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">Ubah nama, nomor induk, atau tambahkan siswa baru di kelas ini</p>
+            </div>
+
+            <button onclick="openAddStudentModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-xs">
+              <i data-lucide="user-plus" class="w-4 h-4"></i> Tambah Siswa Baru
+            </button>
+          </div>
+
+          <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+                  <th class="py-3 px-4 w-10 text-center">No</th>
+                  <th class="py-3 px-4 w-28">NIS / NISN</th>
+                  <th class="py-3 px-4">Nama Lengkap Siswa</th>
+                  <th class="py-3 px-3 w-16 text-center">L/P</th>
+                  <th class="py-3 px-4 w-28 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="manage-students-table-body" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="p-4 bg-slate-50/60 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+            <span class="italic text-[11px]">* Perubahan nama dan data siswa akan otomatis memperbarui rekap presensi</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TAB 4: LKPD & MATERI AJAR BAHASA INDONESIA    -->
+    <!-- ============================================== -->
+    <section id="tab-content-materi" class="tab-view hidden space-y-5">
+      <!-- Filter Level / Kelas -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2" id="grade-filter-buttons">
+          <span class="text-xs font-bold text-slate-400 mr-2 uppercase tracking-wide">Tingkat Kelas:</span>
+          <button onclick="filterMaterials('all')" data-grade="all" class="mat-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 text-white shadow-xs transition">Semua Kelas</button>
+          <button onclick="filterMaterials('10')" data-grade="10" class="mat-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">Kelas X (Fase E)</button>
+          <button onclick="filterMaterials('11')" data-grade="11" class="mat-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">Kelas XI (Fase F)</button>
+          <button onclick="filterMaterials('12')" data-grade="12" class="mat-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">Kelas XII (Fase F Lanjut)</button>
+        </div>
+
+        <div class="relative w-full md:w-64">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+          <input type="text" id="search-materi" placeholder="Cari teks materi/LKPD..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 outline-none">
+        </div>
+      </div>
+
+      <!-- Materi & LKPD Grid Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="materials-container">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- TAB 5: BANK SOAL & EVALUASI (FORMATIF/SUMATIF)-->
+    <!-- ============================================== -->
+    <section id="tab-content-soal" class="tab-view hidden space-y-5">
+      <!-- Toolbar Filter & Action -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Filter Kelas</label>
+            <select id="filter-soal-grade" onchange="renderQuestions()" class="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none">
+              <option value="all">Semua Tingkat (10, 11, 12)</option>
+              <option value="10">Kelas 10 (Fase E)</option>
+              <option value="11">Kelas 11 (Fase F)</option>
+              <option value="12">Kelas 12 (Fase F Lanjut)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kategori Asesmen</label>
+            <select id="filter-soal-type" onchange="renderQuestions()" class="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none">
+              <option value="all">Semua Tipe Asesmen</option>
+              <option value="Formatif">Asesmen Formatif</option>
+              <option value="Sumatif Lingkup Materi">Sumatif Lingkup Materi (STS)</option>
+              <option value="Sumatif Akhir Semester">Sumatif Akhir Semester (SAS)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tingkat Kognitif</label>
+            <select id="filter-soal-level" onchange="renderQuestions()" class="border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none">
+              <option value="all">Semua Tingkat (LOTS/HOTS)</option>
+              <option value="HOTS">HOTS (Analisis/Evaluasi)</option>
+              <option value="LOTS">LOTS (Pemahaman/Ingatan)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 w-full lg:w-auto justify-end">
+          <button onclick="openCustomQuestionModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-sky-600"></i> Buat Butir Soal Baru
+          </button>
+          <button onclick="generateExamPaper()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-xs shadow-sky-600/30">
+            <i data-lucide="printer" class="w-4 h-4"></i> Cetak Naskah Ujian
+          </button>
+        </div>
+      </div>
+
+      <!-- Question List Container -->
+      <div class="space-y-4" id="questions-list-container">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================== -->
+  <!-- MODAL: Tambah Siswa Baru                       -->
+  <!-- ============================================== -->
+  <div id="modal-add-student" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4 text-emerald-600"></i> Tambah Siswa Baru
+        </h3>
+        <button onclick="closeAddStudentModal()" class="p-1 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveNewStudent(event)" class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Rombel / Kelas Tujuan</label>
+          <input type="text" id="new-std-class-name" readonly class="w-full bg-slate-100 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-700 outline-none">
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nama Lengkap Siswa</label>
+          <input type="text" id="new-std-name" required placeholder="Cth: Muhammad Rizki Pratama" class="w-full border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-sky-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">NIS (Nomor Induk)</label>
+            <input type="text" id="new-std-nis" required placeholder="1025" class="w-full border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-sky-500 font-mono">
+          </div>
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">NISN (10 Digit)</label>
+            <input type="text" id="new-std-nisn" placeholder="0078129015" class="w-full border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-sky-500 font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Jenis Kelamin</label>
+          <select id="new-std-gender" class="w-full border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="L">Laki-laki (L)</option>
+            <option value="P">Perempuan (P)</option>
+          </select>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
+          <button type="button" onclick="closeAddStudentModal()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-slate-50">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold">Simpan Siswa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Edit Data Siswa (Ubah Nama, NIS, NISN, JK) -->
+  <div id="modal-edit-student" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+          <i data-lucide="user-cog" class="w-4 h-4 text-sky-600"></i> Edit / Ubah Data Siswa
+        </h3>
+        <button onclick="closeEditStudentModal()" class="p-1 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveEditStudent(event)" class="p-6 space-y-4 text-xs">
+        <input type="hidden" id="edit-std-original-nis">
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nama Lengkap Siswa</label>
+          <input type="text" id="edit-std-name" required class="w-full border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-sky-500 font-medium">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">NIS</label>
+            <input type="text" id="edit-std-nis" required class="w-full border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-sky-500 font-mono">
+          </div>
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">NISN</label>
+            <input type="text" id="edit-std-nisn" class="w-full border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-sky-500 font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Jenis Kelamin</label>
+          <select id="edit-std-gender" class="w-full border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="L">Laki-laki (L)</option>
+            <option value="P">Perempuan (P)</option>
+          </select>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
+          <button type="button" onclick="closeEditStudentModal()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-slate-50">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-semibold">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Custom Konfirmasi Hapus (No window.confirm) -->
+  <div id="modal-confirm" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl text-center space-y-4">
+      <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h4 class="font-bold text-sm text-slate-900" id="confirm-modal-title">Konfirmasi Hapus</h4>
+        <p class="text-xs text-slate-500 mt-1" id="confirm-modal-desc">Apakah Anda yakin ingin menghapus data ini secara permanen?</p>
+      </div>
+      <div class="flex items-center justify-center gap-2 pt-2">
+        <button id="confirm-modal-cancel" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">Batal</button>
+        <button id="confirm-modal-ok" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition">Hapus Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Detail LKPD & Materi Ajar -->
+  <div id="modal-lkpd" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <div>
+          <span id="modal-lkpd-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-200">Kelas 10</span>
+          <h3 id="modal-lkpd-title" class="font-bold text-base text-slate-900 mt-1">Teks Laporan Hasil Observasi</h3>
+        </div>
+        <button onclick="closeLkpdModal()" class="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-700 leading-relaxed" id="modal-lkpd-content">
+        <!-- Injected via JS -->
+      </div>
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+        <button onclick="copyLkpdText()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold flex items-center gap-1.5 text-xs transition">
+          <i data-lucide="copy" class="w-4 h-4"></i> Salin Seluruh Dokumen (Word)
+        </button>
+        <button onclick="closeLkpdModal()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-semibold text-xs transition">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Tambah Butir Soal Baru -->
+  <div id="modal-add-soal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+          <i data-lucide="file-plus" class="w-4 h-4 text-sky-600"></i> Tambah Butir Asesmen Baru
+        </h3>
+        <button onclick="closeCustomQuestionModal()" class="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-new-question" onsubmit="saveCustomQuestion(event)" class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">Kelas</label>
+            <select id="new-q-grade" class="w-full border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-sky-500">
+              <option value="10">Kelas 10</option>
+              <option value="11">Kelas 11</option>
+              <option value="12">Kelas 12</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">Kategori Asesmen</label>
+            <select id="new-q-type" class="w-full border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-sky-500">
+              <option value="Formatif">Formatif</option>
+              <option value="Sumatif Lingkup Materi">Sumatif Lingkup Materi</option>
+              <option value="Sumatif Akhir Semester">Sumatif Akhir Semester</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">Level Kognitif</label>
+            <select id="new-q-level" class="w-full border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-sky-500">
+              <option value="HOTS">HOTS (Analisis)</option>
+              <option value="LOTS">LOTS (Dasar)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Materi Pokok / Elemen</label>
+          <input type="text" id="new-q-topic" required placeholder="Cth: Teks Eksplanasi Fenomena Sosial" class="w-full border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-sky-500">
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Teks Stimulus / Wacana (Opsional)</label>
+          <textarea id="new-q-stimulus" rows="3" placeholder="Kutipan cerpen, kutipan paragraf LHO, atau wacana berita..." class="w-full border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-sky-500 font-sans"></textarea>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Instruksi / Pertanyaan Soal</label>
+          <textarea id="new-q-question" required rows="2" placeholder="Tuliskan butir pertanyaan secara operasional..." class="w-full border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-sky-500"></textarea>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Kunci Jawaban / Pedoman Rubrik Penskoran</label>
+          <textarea id="new-q-answer" required rows="2" placeholder="Jawaban tepat atau kriteria rubrik esai..." class="w-full border border-slate-200 rounded-lg p-2 outline-none focus:ring-2 focus:ring-sky-500"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
+          <button type="button" onclick="closeCustomQuestionModal()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-semibold">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded-xl hover:bg-sky-700 font-semibold">Simpan Butir Soal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: Integrasi Google Sheets Cloud          -->
+  <!-- ============================================== -->
+  <div id="modal-googlesheets" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-gradient-to-r from-emerald-50 via-teal-50/50 to-slate-50 border-b border-emerald-100 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/20">
+            <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-900 leading-tight">Integrasi Google Sheets Cloud</h3>
+            <p class="text-xs text-slate-500">Penyimpanan presensi, data siswa, kelas & bank soal di Google Spreadsheet</p>
+          </div>
+        </div>
+        <button onclick="closeGoogleSheetsModal()" class="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs Inside Modal -->
+      <div class="flex border-b border-slate-200 bg-slate-50/60 px-6 pt-2">
+        <button type="button" onclick="switchGoogleSheetsTab('config')" id="tab-btn-gs-config" class="px-4 py-2 text-xs font-bold border-b-2 border-emerald-600 text-emerald-800 flex items-center gap-2 transition">
+          <i data-lucide="sliders" class="w-4 h-4"></i> Konfigurasi & Sinkronisasi
+        </button>
+        <button type="button" onclick="switchGoogleSheetsTab('guide')" id="tab-btn-gs-guide" class="px-4 py-2 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Panduan & Kode Script
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-5 text-xs flex-1">
+        <!-- TAB 1: KONFIGURASI & SINKRONISASI -->
+        <div id="gs-tab-content-config" class="space-y-4">
+          <!-- Status Banner -->
+          <div id="gsheets-status-box" class="p-4 rounded-2xl border transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 border-slate-200">
+            <div class="flex items-center gap-3">
+              <div id="gsheets-status-icon-wrap" class="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-200 text-slate-600">
+                <i data-lucide="cloud-off" class="w-5 h-5" id="gsheets-status-icon"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span id="gsheets-status-title" class="font-bold text-slate-800 text-sm">Belum Terhubung</span>
+                  <span id="gsheets-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">Lokal / Browser</span>
+                </div>
+                <p id="gsheets-status-desc" class="text-[11px] text-slate-500 mt-0.5">Data hanya disimpan di memori browser lokal perangkat ini.</p>
+              </div>
+            </div>
+            <div id="gsheets-sheet-link-wrap" class="hidden">
+              <a id="gsheets-open-sheet-btn" href="#" target="_blank" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-2xs">
+                <span>Buka Google Sheets</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Form Fields -->
+          <div class="space-y-3.5 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">
+                URL Web App Google Apps Script <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <input type="url" id="input-gsheets-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border border-slate-200 rounded-xl py-2 px-3 pr-24 font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                <button type="button" onclick="testGoogleSheetsConnection()" id="btn-test-gsheets" class="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] flex items-center gap-1 transition">
+                  <i data-lucide="activity" class="w-3.5 h-3.5"></i> Tes
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Dihasilkan dari Apps Script: Terapkan (Deploy) &gt; Aplikasi Web (Akses: Siapa saja).</p>
+            </div>
+
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">
+                URL Dokumen Spreadsheet Google <span class="text-slate-400 font-normal">(Opsional)</span>
+              </label>
+              <input type="url" id="input-gsheets-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/.../edit" class="w-full border border-slate-200 rounded-xl p-2 font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+              <p class="text-[11px] text-slate-400 mt-1">Tautan langsung agar Anda bisa membuka spreadsheet dengan satu kali klik.</p>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                <label for="check-gsheets-autosync" class="font-bold text-slate-800 cursor-pointer select-none">Auto-Sync (Simpan Otomatis)</label>
+                <p class="text-[11px] text-slate-500">Kirim data ke Google Sheets saat menyimpan presensi, tambah siswa, kelas, dll.</p>
+              </div>
+              <input type="checkbox" id="check-gsheets-autosync" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer" checked>
+            </div>
+          </div>
+
+          <!-- Sync Controls -->
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-emerald-600"></i> Sinkronisasi Manual Data
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button type="button" onclick="syncAllToGoogleSheets(true)" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-xs">
+                <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+                <span>Kirim Semua Data (Sync Up)</span>
+              </button>
+              <button type="button" onclick="fetchDataFromGoogleSheets()" class="py-2.5 px-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl font-bold flex items-center justify-center gap-2 transition">
+                <i data-lucide="cloud-download" class="w-4 h-4 text-sky-600"></i>
+                <span>Tarik Data Sheet (Sync Down)</span>
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-500 text-center" id="gsheets-last-sync-label">
+              Terakhir sinkron: Belum pernah
+            </p>
+          </div>
+        </div>
+
+        <!-- TAB 2: PANDUAN & KODE SCRIPT -->
+        <div id="gs-tab-content-guide" class="space-y-4 hidden">
+          <div class="p-3.5 bg-sky-50 border border-sky-200 rounded-2xl text-sky-900 space-y-1">
+            <div class="font-bold flex items-center gap-1.5">
+              <i data-lucide="info" class="w-4 h-4 text-sky-600"></i> Cara Memasang Backend Google Apps Script
+            </div>
+            <p class="text-[11px] text-sky-800 leading-relaxed">
+              Google Apps Script berfungsi sebagai backend gratis & resmi untuk menghubungkan antarmuka ini langsung dengan Google Spreadsheet Anda.
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex gap-3 items-start p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">1</div>
+              <div>
+                <p class="font-bold text-slate-800">Buat Spreadsheet Baru</p>
+                <p class="text-slate-500 text-[11px]">Buka <a href="https://sheets.google.com" target="_blank" class="text-sky-600 underline font-semibold">sheets.google.com</a> dan buat spreadsheet kosong baru dengan nama <strong>SIM-Guru Bahasa Indonesia</strong>.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-3 items-start p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">2</div>
+              <div>
+                <p class="font-bold text-slate-800">Buka Menu Apps Script</p>
+                <p class="text-slate-500 text-[11px]">Pada menu atas spreadsheet, klik <strong>Ekstensi (Extensions)</strong> &gt; <strong>Apps Script</strong>.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-3 items-start p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">3</div>
+              <div class="flex-1">
+                <div class="flex justify-between items-center mb-1.5">
+                  <p class="font-bold text-slate-800">Salin & Tempel Kode Skrip</p>
+                  <button type="button" onclick="copyAppsScriptCode()" class="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg font-bold text-[10px] flex items-center gap-1 transition">
+                    <i data-lucide="copy" class="w-3 h-3"></i> Salin Kode Script
+                  </button>
+                </div>
+                <p class="text-slate-500 text-[11px] mb-2">Hapus seluruh isi editor bawaan, lalu paste (tempel) kode skrip di bawah ini, lalu simpan (Ctrl+S).</p>
+                <textarea id="apps-script-code-preview" readonly class="w-full h-32 bg-slate-900 text-emerald-400 font-mono text-[10px] p-2.5 rounded-xl border border-slate-800 outline-none select-all"></textarea>
+              </div>
+            </div>
+
+            <div class="flex gap-3 items-start p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">4</div>
+              <div>
+                <p class="font-bold text-slate-800">Terapkan Sebagai Aplikasi Web (Deploy as Web App)</p>
+                <p class="text-slate-500 text-[11px] leading-relaxed">
+                  Klik tombol <strong>Terapkan (Deploy)</strong> &gt; <strong>Kelola Penyiapan (New deployment)</strong> &gt; Pilih jenis <strong>Aplikasi Web</strong>.<br>
+                  • Jalankan sebagai: <strong>Saya (email Anda)</strong><br>
+                  • Siapa yang memiliki akses: <strong class="text-rose-600">Siapa saja (Anyone)</strong> *(Wajib dipilih!)*<br>
+                  • Klik Terapkan, dan berikan izin akses akun jika diminta.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex gap-3 items-start p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">5</div>
+              <div>
+                <p class="font-bold text-slate-800">Hubungkan ke Aplikasi Web Ini</p>
+                <p class="text-slate-500 text-[11px]">Salin URL Aplikasi Web berakhiran <code>/exec</code>, buka kembali tab <strong>Konfigurasi</strong> di modal ini, tempelkan, lalu klik <strong>Simpan & Terapkan</strong>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+        <button type="button" onclick="closeGoogleSheetsModal()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 font-semibold transition">
+          Tutup
+        </button>
+        <button type="button" onclick="saveGoogleSheetsConfig(false)" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition shadow-xs shadow-emerald-600/30">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Simpan & Terapkan</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINT CONTAINER (Hidden in screen, visible during window.print()) -->
+  <div id="print-area" class="hidden"></div>
+
+  <!-- Toast Notification Feedback -->
+  <div id="app-toast" class="fixed bottom-5 right-5 transform translate-y-24 opacity-0 transition-all duration-300 z-50 flex items-center gap-2 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold pointer-events-none">
+    <i data-lucide="info" class="w-4 h-4 text-sky-400" id="toast-icon"></i>
+    <span id="toast-message">Operasi berhasil</span>
+  </div>
+
+  <script>
+    /* =========================================================
+       1. DATABASE MOCK DATA (KURIKULUM MERDEKA BAHASA INDONESIA)
+       ========================================================= */
+
+    // Data Kelas & Siswa Default
+    const DEFAULT_CLASS_META = [
+      { id: "X-A", grade: "10", name: "Kelas X-A (Fase E)" },
+      { id: "X-B", grade: "10", name: "Kelas X-B (Fase E)" },
+      { id: "XI-1", grade: "11", name: "Kelas XI-1 (Fase F)" },
+      { id: "XI-2", grade: "11", name: "Kelas XI-2 (Fase F)" },
+      { id: "XII-1", grade: "12", name: "Kelas XII-1 (Fase F Lanjut)" },
+      { id: "XII-2", grade: "12", name: "Kelas XII-2 (Fase F Lanjut)" },
+    ];
+
+    const DEFAULT_STUDENTS = {
+      "X-A": [
+        { nis: "1021", nisn: "0078129011", name: "Ahmad Fauzan Pratama", gender: "L" },
+        { nis: "1022", nisn: "0078129012", name: "Alya Zahra Salsabila", gender: "P" },
+        { nis: "1023", nisn: "0078129013", name: "Bagus Dwi Wicaksono", gender: "L" },
+        { nis: "1024", nisn: "0078129014", name: "Cantika Putri Maheswari", gender: "P" },
+        { nis: "1025", nisn: "0078129015", name: "Daffa Aryasuta", gender: "L" },
+        { nis: "1026", nisn: "0078129016", name: "Fathia Nur Annisa", gender: "P" },
+        { nis: "1027", nisn: "0078129017", name: "Gilang Ramadhan", gender: "L" },
+        { nis: "1028", nisn: "0078129018", name: "Hanifah Kusuma Wardani", gender: "P" },
+      ],
+      "X-B": [
+        { nis: "1041", nisn: "0078129031", name: "Aditya Surya Nugraha", gender: "L" },
+        { nis: "1042", nisn: "0078129032", name: "Berlian Cindy Amanda", gender: "P" },
+        { nis: "1043", nisn: "0078129033", name: "Chandra Wibawa", gender: "L" },
+        { nis: "1044", nisn: "0078129034", name: "Dina Mariana", gender: "P" },
+        { nis: "1045", nisn: "0078129035", name: "Eko Prasetyo", gender: "L" },
+      ],
+      "XI-1": [
+        { nis: "0911", nisn: "0067118011", name: "Akbar Maulana Ibrahim", gender: "L" },
+        { nis: "0912", nisn: "0067118012", name: "Anindya Ayu Lestari", gender: "P" },
+        { nis: "0913", nisn: "0067118013", name: "Bayu Aji Pamungkas", gender: "L" },
+        { nis: "0914", nisn: "0067118014", name: "Citra Dewi Anggraini", gender: "P" },
+      ],
+      "XI-2": [
+        { nis: "0931", nisn: "0067118031", name: "Galih Rakasiwi", gender: "L" },
+        { nis: "0932", nisn: "0067118032", name: "Indah Permatasari", gender: "P" },
+        { nis: "0933", nisn: "0067118033", name: "M. Zulfikar Alamsyah", gender: "L" },
+      ],
+      "XII-1": [
+        { nis: "0801", nisn: "0056107011", name: "Ardiansyah Putra Wijaya", gender: "L" },
+        { nis: "0802", nisn: "0056107012", name: "Bella Safitri Amanda", gender: "P" },
+        { nis: "0803", nisn: "0056107013", name: "Dimas Anggoro Kasih", gender: "L" },
+      ],
+      "XII-2": [
+        { nis: "0821", nisn: "0056107021", name: "Hendra Gunawan", gender: "L" },
+        { nis: "0822", nisn: "0056107022", name: "Jessica Maharani", gender: "P" },
+      ]
+    };
+
+    // Bank LKPD & Materi Ajar Bahasa Indonesia
+    const CURRICULUM_MATERIALS = [
+      {
+        id: "mat_x_1",
+        grade: "10",
+        topic: "Teks Laporan Hasil Observasi (LHO)",
+        phase: "Fase E",
+        semester: "Ganjil",
+        duration: "4 JP x 45 Menit",
+        tp: "Peserta didik mampu menganalisis struktur (definisi umum, deskripsi bagian, deskripsi manfaat) dan kaidah kebahasaan (verba relasional, kalimat definisi/deskripsi) dalam teks LHO secara kritis.",
+        summary: "Teks LHO disusun berdasarkan pengamatan fakta objektif tanpa opini subjektif. Ciri utama: bersifat global/universal, berbasis data lapangan, tidak mengandung prasangka, dan menggunakan kalimat definisi serta klasifikasi ilmiah.",
+        lkpdTitle: "LKPD 1: Menguak Fakta Flora & Fauna Endemik Indonesia",
+        activity: "1. Bentuk kelompok beranggotakan 4 orang.<br>2. Amati salah satu objek di lingkungan sekolah (contoh: Pohon Ketapang, Biopori, atau Tanaman Sansiviera).<br>3. Catat ciri morfologi dan fungsinya.<br>4. Susun draf teks LHO dengan struktur minimal 3 paragraf sesuai kaidah.",
+        rubric: "Skor 4: Struktur lengkap & objektif, verba relasional tepat.<br>Skor 3: Struktur lengkap, sedikit kesalahan istilah ilmiah.<br>Skor 2: Kurang satu struktur (tidak ada deskripsi manfaat).<br>Skor 1: Teks lebih condong ke teks deskripsi subjektif."
+      },
+      {
+        id: "mat_x_2",
+        grade: "10",
+        topic: "Teks Anekdot & Kritik Sosial Berbalut Humor",
+        phase: "Fase E",
+        semester: "Ganjil",
+        duration: "4 JP x 45 Menit",
+        tp: "Mengevaluasi gagasan dan pesan tersirat dalam teks anekdot lisan maupun tulis untuk menyampaikan kritik sosial secara santun dan bertanggung jawab.",
+        summary: "Anekdot adalah cerita singkat yang lucu dan menarik, biasanya mengenai orang penting atau terkenal dan berdasarkan kejadian nyata, yang membawa misi pesan kritik/penyadaran publik.",
+        lkpdTitle: "LKPD 2: Menulis Komik Anekdot Bertema Layanan Publik",
+        activity: "1. Pilihlah salah satu fenomena sosial: antrean fasilitas umum, sampah, atau kecanduan gadget.<br>2. Buatlah dialog anekdot dengan struktur: Abstraksi, Orientasi, Krisis, Reaksi, dan Koda.<br>3. Konversikan menjadi komik setrip sederhana 4 panel.",
+        rubric: "Aspek Dinilai: Keberadaan unsur humor/krisis (30%), Ketajaman kritik sosial santun (40%), Kelengkapan struktur (30%)."
+      },
+      {
+        id: "mat_x_3",
+        grade: "10",
+        topic: "Teks Negosiasi untuk Mencapai Kesepakatan",
+        phase: "Fase E",
+        semester: "Genap",
+        duration: "6 JP x 45 Menit",
+        tp: "Menilai argumen dalam teks negosiasi serta mempraktikkan simulasi perundingan berbasis win-win solution demi mufakat bersama.",
+        summary: "Teks negosiasi memuat orientasi, pengajuan, penawaran, dan persetujuan. Menggunakan bahasa persuasif, kalimat santun, dan pasangan tuturan timbal balik.",
+        lkpdTitle: "LKPD 3: Simulasi Negosiasi Anggaran Pensi Sekolah",
+        activity: "Simulasikan pertemuan antara Ketua Panitia Pensi dengan Kepala Sekolah terkait pengajuan penambahan durasi jam pentas seni dengan bahasa santun dan rasional.",
+        rubric: "Kriteria: Penggunaan tutur persuasif (35%), Pencapaian konsensus tanpa paksaan (35%), Kesantunan pragmatik (30%)."
+      },
+      {
+        id: "mat_xi_1",
+        grade: "11",
+        topic: "Teks Eksplanasi Kausalitas Fenomena Alam & Sosial",
+        phase: "Fase F",
+        semester: "Ganjil",
+        duration: "6 JP x 45 Menit",
+        tp: "Menganalisis keterkaitan sebab-akibat (kausalitas) dan kronologis dalam teks eksplanasi ilmiah populer.",
+        summary: "Teks eksplanasi menerangkan mengapa dan bagaimana sebuah fenomena terjadi. Menggunakan konjungsi kausalitas (sebab, karena, oleh karena itu) dan konjungsi kronologis (kemudian, setelah itu).",
+        lkpdTitle: "LKPD 1: Mengurai Rantai Kausalitas Bencana Banjir Urban",
+        activity: "1. Baca artikel infografis banjir perkotaan.<br>2. Petakan konjungsi kausalitas primer dan sekunder.<br>3. Buat bagan alur hubungan sebab-akibat terjadinya fenomena tersebut.",
+        rubric: "Akurasi identifikasi kausalitas (40%), Kerapian bagan alur logis (40%), Penguasaan ejaan EYD (20%)."
+      },
+      {
+        id: "mat_xi_2",
+        grade: "11",
+        topic: "Menulis Cerpen Berdasarkan Nilai Kehidupan Sehari-hari",
+        phase: "Fase F",
+        semester: "Ganjil",
+        duration: "8 JP x 45 Menit",
+        tp: "Mengonstruksi cerpen dengan memperhatikan unsur intrinsik (penokohan, latar, alur, sudut pandang) dan ekstrinsik (nilai moral, sosial, budaya).",
+        summary: "Cerpen merupakan prosa fiksi padat. Pemilihan sudut pandang (orang pertama 'aku' atau orang ketiga 'dia') menentukan kedekatan emosi pembaca dengan konflik tokoh.",
+        lkpdTitle: "LKPD 2: Menenun Kisah dari Realitas Sekitar",
+        activity: "Tuliskan cerpen orisinal sepanjang 500-800 kata yang mengangkat dilema kejujuran pelajar SMA dengan alur sorot-balik (flashback).",
+        rubric: "Keutuhan alur & konflik (30%), Kedalaman penokohan (30%), Kebaruan diksi (20%), Kerapian PUEBI/EYD (20%)."
+      },
+      {
+        id: "mat_xi_3",
+        grade: "11",
+        topic: "Penyusunan Proposal Kegiatan & Karya Ilmiah",
+        phase: "Fase F",
+        semester: "Genap",
+        duration: "6 JP x 45 Menit",
+        tp: "Merancang proposal kegiatan sekolah yang sistematis, logis, dan akuntabel baik dari sisi latar belakang maupun estimasi anggaran.",
+        summary: "Struktur proposal: Judul, Latar Belakang, Landasan Hukum, Tujuan, Sasaran, Susunan Kepanitiaan, Jadwal Pelaksanaan, dan Rencana Anggaran Biaya (RAB).",
+        lkpdTitle: "LKPD 3: Penyusunan Proposal Bulan Bahasa SMA",
+        activity: "Susun draf proposal 'Peringatan Bulan Bahasa dan Sastra' mencakup 3 cabang lomba, jadwal rinci, dan RAB yang realistis.",
+        rubric: "Kelengkapan komponen (40%), Rasionalitas latar belakang & RAB (40%), Kebakuan ragam bahasa formal (20%)."
+      },
+      {
+        id: "mat_xii_1",
+        grade: "12",
+        topic: "Surat Lamaran Pekerjaan & Curriculum Vitae (CV)",
+        phase: "Fase F Lanjut",
+        semester: "Ganjil",
+        duration: "6 JP x 45 Menit",
+        tp: "Menyusun surat lamaran pekerjaan dan riwayat hidup berstandar profesional sesuai konvensi EYD V dan etika penulisan formal.",
+        summary: "Surat lamaran bersifat kedinasan dan formal. Bagian penting: Tempat/tanggal pembuatan, lampiran/hal, alamat tujuan, salam pembuka, isi (kualifikasi diri), lampiran bukti, dan penutup.",
+        lkpdTitle: "LKPD 1: Menembus Dunia Industri lewat Surat Lamaran Unggul",
+        activity: "Pilihlah salah satu iklan lowongan kerja di media massa. Buatlah surat lamaran pekerjaan bertulis tangan rapi atau ketik sesuai ketentuan.",
+        rubric: "Sistematika surat resmi (35%), Kesesuaian kualifikasi dengan iklan (35%), Ketepatan ejaan tanda baca (30%)."
+      },
+      {
+        id: "mat_xii_2",
+        grade: "12",
+        topic: "Teks Editorial / Opini Tajuk Rencana",
+        phase: "Fase F Lanjut",
+        semester: "Ganjil",
+        duration: "6 JP x 45 Menit",
+        tp: "Menyajikan opini pribadi yang diperkuat fakta dan argumen logis terhadap isu aktual yang berkembang di masyarakat.",
+        summary: "Teks editorial mewakili sikap redaksi media terhadap peristiwa terkini yang krusial/kontroversial. Struktur: Pengenalan isu (tesis), Penyampaian pendapat/argumen, dan Penegasan ulang.",
+        lkpdTitle: "LKPD 2: Menulis Esai Opini Kritis Isu Pendidikan",
+        activity: "Susun artikel opini kritis (600 kata) mengenai fenomena pemanfaatan Artificial Intelligence (AI) dalam pembelajaran di sekolah.",
+        rubric: "Kekuatan data/fakta pendukung (40%), Ketajaman daya analisis (40%), Kekohesifan antarkalimat (20%)."
+      },
+      {
+        id: "mat_xii_3",
+        grade: "12",
+        topic: "Kritik Sastra dan Esai Apresiasi Karya Seni",
+        phase: "Fase F Lanjut",
+        semester: "Genap",
+        duration: "6 JP x 45 Menit",
+        tp: "Menulis kritik sastra dan esai secara objektif berdasarkan teori strukturalisme dan pendekatan pragmatik pembaca.",
+        summary: "Kritik sastra fokus menilai kelebihan dan kelemahan karya sastra secara teoretis, sedangkan esai lebih bersifat personal, interpretatif, dan reflektif.",
+        lkpdTitle: "LKPD 3: Mengulas Makna Puisi 'Aku' Karya Chairil Anwar",
+        activity: "Tuliskan telaah esai apresiatif sepanjang 2 halaman mengenai gaya bahasa personifikasi dan semangat vitalisme dalam puisi 'Aku'.",
+        rubric: "Ketepatan telaah diksi (35%), Kedalaman tafsir estetika (35%), Bahasa mengalir & orisinal (30%)."
+      }
+    ];
+
+    // Bank Soal Evaluasi Formatif & Sumatif
+    const INITIAL_QUESTIONS = [
+      {
+        id: "soal_1",
+        grade: "10",
+        type: "Sumatif Lingkup Materi",
+        level: "HOTS",
+        topic: "Teks Laporan Hasil Observasi",
+        stimulus: "Perhatikan kutipan berikut:<br><em>'Tanaman kelor (Moringa oleifera) memiliki daun berbentuk bulat telur dengan ukuran kecil bersusun majemuk. Tanaman ini dikenal kaya antioksidan dan zat besi, sehingga banyak dimanfaatkan sebagai suplemen alami penambah daya tahan tubuh di berbagai negara tropis.'</em>",
+        question: "Berdasarkan struktur teks laporan hasil observasi, paragraf di atas menduduki bagian struktur apa dan sertakan alasan kaidah kebahasaannya!",
+        answer: "Bagian: Deskripsi bagian dan deskripsi manfaat. Alasan: Kalimat pertama mendeskripsikan ciri fisik/morfologi daun secara objektif, sedangkan kalimat kedua menjelaskan faedah serta kandungan nutrisinya bagi kesehatan manusia."
+      },
+      {
+        id: "soal_2",
+        grade: "10",
+        type: "Formatif",
+        level: "LOTS",
+        topic: "Teks Anekdot",
+        stimulus: "",
+        question: "Sebutkan dan jelaskan secara singkat lima struktur pokok pembangun teks anekdot!",
+        answer: "1. Abstraksi (pendahuluan latar cerita)\n2. Orientasi (awal kemunculan masalah)\n3. Krisis (puncak kelucuan/kekonyolan yang mengkritik)\n4. Reaksi (respons terhadap kekonyolan)\n5. Koda (kesimpulan/penutup cerita)"
+      },
+      {
+        id: "soal_3",
+        grade: "11",
+        type: "Sumatif Lingkup Materi",
+        level: "HOTS",
+        topic: "Teks Eksplanasi",
+        stimulus: "<em>'Ketika lempeng tektonik bergerak saling bertumbukan, energi regangan terakumulasi di sepanjang batas sesar. Saat batuan tidak lagi mampu menahan tegangan, terjadi pelepasan energi secara mendadak yang memicu gelombang seismik ke segala penjuru bumi.'</em>",
+        question: "Analisislah hubungan kausalitas kronologis yang termuat dalam kutipan teks eksplanasi gempa bumi di atas!",
+        answer: "Hubungan kausalitas diawali oleh pergerakan lempeng tektonik (sebab awal) yang mengakibatkan akumulasi energi regangan. Ketidakmampuan batuan menahan tegangan (sebab antara) mengakibatkan pelepasan energi mendadak yang melahirkan gelombang seismik (akibat akhir)."
+      },
+      {
+        id: "soal_4",
+        grade: "11",
+        type: "Sumatif Akhir Semester",
+        level: "HOTS",
+        topic: "Unsur Intrinsik Cerpen",
+        stimulus: "<em>'Setiap kali lonceng stasiun berdentang tiga kali, Pak Karto selalu menatap ujung rel yang berkabut. Sepuluh tahun silam di rel itulah anak semata wayangnya pamit merantau dengan jaket lusuh yang belum sempat dicuci.'</em>",
+        question: "Jelaskan latar suasana dan teknik penokohan yang diterapkan pengarang dalam cuplikan cerpen tersebut!",
+        answer: "Latar suasana: Melankolis, sunyi, sarat kerinduan dan kepiluan masa lalu. Teknik penokohan: Dramatik/tidak langsung, yaitu memperlihatkan kebiasaan gerak-gerik tokoh yang terpaku menatap rel dan mengenang jaket lusuh anaknya."
+      },
+      {
+        id: "soal_5",
+        grade: "12",
+        type: "Sumatif Akhir Semester",
+        level: "HOTS",
+        topic: "Surat Lamaran Pekerjaan",
+        stimulus: "<em>Kutipan kalimat penutup surat lamaran: 'Atas perhatiannya bapak/ibu, saya ucapkan banyak-banyak terima kasih.'</em>",
+        question: "Perbaikilah kalimat penutup surat lamaran pekerjaan di atas agar sesuai dengan kaidah kesantunan dan tata bahasa baku EYD V!",
+        answer: "Perbaikan yang benar:\n'Atas perhatian Bapak/Ibu, saya mengucapkan terima kasih.'\n(Kata sapaan Bapak/Ibu ditulis kapital, hindari kata ganti 'nya', dan hindari pemborosan kata 'banyak-banyak')."
+      },
+      {
+        id: "soal_6",
+        grade: "12",
+        type: "Formatif",
+        level: "HOTS",
+        topic: "Teks Editorial",
+        stimulus: "<em>'Pemerintah semestinya tidak hanya gencar membangun infrastruktur fisik megah, tetapi juga memastikan daya beli masyarakat desa tidak tergerus laju inflasi bahan pangan.'</em>",
+        question: "Analisislah jenis kalimat di atas, apakah termasuk fakta atau opini redaksi? Berikan argumen pendukungnya!",
+        answer: "Kalimat tersebut adalah Opini / Pendapat Redaksi. Alasannya memuat kata modalitas 'semestinya' yang mencerminkan saran, harapan, dan sikap subjektif redaksi terhadap prioritas kebijakan negara."
+      }
+    ];
+
+    /* =========================================================
+       2. STATE & STORAGE MANAGEMENT (LOCAL + GOOGLE SHEETS)
+       ========================================================= */
+    let currentClass = "X-A";
+    let classesMeta = [];
+    let studentsDatabase = {};
+    let attendanceDatabase = {};
+    let customQuestions = [];
+    let activeGradeFilter = 'all';
+
+    // Google Sheets Config State
+    let gsheetsConfig = {
+      url: localStorage.getItem("sim_guru_gsheets_url") || "",
+      sheetUrl: localStorage.getItem("sim_guru_gsheets_sheet_url") || "",
+      autoSync: localStorage.getItem("sim_guru_gsheets_autosync") !== "false",
+      lastSync: localStorage.getItem("sim_guru_gsheets_last_sync") || ""
+    };
+
+    function initAppState() {
+      // 1. Load Classes from local cache
+      const storedClasses = localStorage.getItem("sim_guru_classes");
+      if (storedClasses) {
+        try { classesMeta = JSON.parse(storedClasses); } catch(e) { classesMeta = [...DEFAULT_CLASS_META]; }
+      } else {
+        classesMeta = [...DEFAULT_CLASS_META];
+      }
+
+      // 2. Load Students from local cache
+      const storedStudents = localStorage.getItem("sim_guru_students");
+      if (storedStudents) {
+        try { studentsDatabase = JSON.parse(storedStudents); } catch(e) { studentsDatabase = JSON.parse(JSON.stringify(DEFAULT_STUDENTS)); }
+      } else {
+        studentsDatabase = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
+      }
+
+      // 3. Load Attendance from local cache
+      const storedAttendance = localStorage.getItem("sim_guru_attendance");
+      if (storedAttendance) {
+        try { attendanceDatabase = JSON.parse(storedAttendance); } catch (e) { attendanceDatabase = {}; }
+      }
+
+      // 4. Load Custom Questions from local cache
+      const storedQuestions = localStorage.getItem("sim_guru_questions");
+      if (storedQuestions) {
+        try { customQuestions = JSON.parse(storedQuestions); } catch (e) { customQuestions = []; }
+      }
+
+      // Pastikan ada kelas aktif valid
+      if (classesMeta.length > 0 && !classesMeta.find(c => c.id === currentClass)) {
+        currentClass = classesMeta[0].id;
+      }
+
+      // Set tanggal hari ini
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('attendance-date').value = today;
+
+      // Event listener selector kelas global
+      const classSelect = document.getElementById('global-class-select');
+      classSelect.addEventListener('change', (e) => {
+        currentClass = e.target.value;
+        onCurrentClassChanged();
+      });
+
+      document.getElementById('attendance-date').addEventListener('change', () => {
+        renderAttendanceTable();
+      });
+
+      document.getElementById('search-materi').addEventListener('input', (e) => {
+        renderMaterials(activeGradeFilter, e.target.value.toLowerCase());
+      });
+
+      refreshClassSelectorUI();
+      renderAllViews();
+
+      // Inisialisasi Google Sheets & Muat Script Preview
+      initGoogleSheetsUI();
+
+      // Jika URL Google Sheets sudah dikonfigurasi, otomatis tarik data terbaru dari cloud
+      if (gsheetsConfig.url) {
+        fetchDataFromGoogleSheets({ silent: true });
+      }
+    }
+
+    function saveStateToLocalStorage() {
+      localStorage.setItem("sim_guru_classes", JSON.stringify(classesMeta));
+      localStorage.setItem("sim_guru_students", JSON.stringify(studentsDatabase));
+      localStorage.setItem("sim_guru_attendance", JSON.stringify(attendanceDatabase));
+      localStorage.setItem("sim_guru_questions", JSON.stringify(customQuestions));
+    }
+
+    /* =========================================================
+       2B. GOOGLE SHEETS INTEGRATION & SYNC ENGINE
+       ========================================================= */
+
+    function initGoogleSheetsUI() {
+      // Set input values
+      const urlInput = document.getElementById('input-gsheets-url');
+      const sheetUrlInput = document.getElementById('input-gsheets-sheet-url');
+      const autoSyncCheck = document.getElementById('check-gsheets-autosync');
+
+      if (urlInput) urlInput.value = gsheetsConfig.url;
+      if (sheetUrlInput) sheetUrlInput.value = gsheetsConfig.sheetUrl;
+      if (autoSyncCheck) autoSyncCheck.checked = gsheetsConfig.autoSync;
+
+      // Isi textarea kode script preview di tab panduan
+      const scriptPreview = document.getElementById('apps-script-code-preview');
+      if (scriptPreview) {
+        scriptPreview.value = getAppsScriptSourceCode();
+      }
+
+      updateGoogleSheetsStatusUI();
+    }
+
+    function updateGoogleSheetsStatusUI() {
+      const isConnected = !!gsheetsConfig.url;
+      const statusDot = document.getElementById('gsheets-dot');
+      const statusPulse = document.getElementById('gsheets-pulse');
+      const headerText = document.getElementById('gsheets-header-text');
+      const btnHeader = document.getElementById('btn-gsheets-header');
+
+      const modalTitle = document.getElementById('gsheets-status-title');
+      const modalBadge = document.getElementById('gsheets-status-badge');
+      const modalDesc = document.getElementById('gsheets-status-desc');
+      const modalIconWrap = document.getElementById('gsheets-status-icon-wrap');
+      const modalIcon = document.getElementById('gsheets-status-icon');
+      const modalBox = document.getElementById('gsheets-status-box');
+      const lastSyncLabel = document.getElementById('gsheets-last-sync-label');
+      const sheetLinkWrap = document.getElementById('gsheets-sheet-link-wrap');
+      const openSheetBtn = document.getElementById('gsheets-open-sheet-btn');
+
+      if (isConnected) {
+        // Header
+        if (statusDot) {
+          statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-500";
+        }
+        if (statusPulse) statusPulse.classList.remove('hidden');
+        if (headerText) headerText.innerText = "Google Sheets: Aktif";
+        if (btnHeader) {
+          btnHeader.className = "flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-bold transition shadow-2xs hover:bg-emerald-100";
+        }
+
+        // Modal
+        if (modalTitle) modalTitle.innerText = "Google Sheets Terhubung";
+        if (modalBadge) {
+          modalBadge.innerText = "Cloud Online";
+          modalBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200";
+        }
+        if (modalDesc) {
+          modalDesc.innerText = gsheetsConfig.lastSync 
+            ? `Sinkronisasi cloud aktif. Terakhir diperbarui: ${gsheetsConfig.lastSync}`
+            : "Sinkronisasi cloud aktif. Data otomatis tersimpan di Google Sheets.";
+        }
+        if (modalIconWrap) {
+          modalIconWrap.className = "w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-700";
+        }
+        if (modalIcon) modalIcon.setAttribute('data-lucide', 'cloud-check');
+        if (modalBox) {
+          modalBox.className = "p-4 rounded-2xl border transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-emerald-50/50 border-emerald-200";
+        }
+        if (lastSyncLabel) {
+          lastSyncLabel.innerText = gsheetsConfig.lastSync ? `Terakhir sinkron: ${gsheetsConfig.lastSync}` : "Terakhir sinkron: Belum pernah";
+        }
+
+        if (sheetLinkWrap && openSheetBtn) {
+          if (gsheetsConfig.sheetUrl) {
+            sheetLinkWrap.classList.remove('hidden');
+            openSheetBtn.href = gsheetsConfig.sheetUrl;
+          } else {
+            sheetLinkWrap.classList.add('hidden');
+          }
+        }
+      } else {
+        // Header
+        if (statusDot) {
+          statusDot.className = "relative inline-flex rounded-full h-2 w-2 bg-amber-400";
+        }
+        if (statusPulse) statusPulse.classList.add('hidden');
+        if (headerText) headerText.innerText = "Google Sheets";
+        if (btnHeader) {
+          btnHeader.className = "flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-bold transition shadow-2xs hover:bg-slate-100";
+        }
+
+        // Modal
+        if (modalTitle) modalTitle.innerText = "Belum Terhubung ke Google Sheets";
+        if (modalBadge) {
+          modalBadge.innerText = "Lokal Browser";
+          modalBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700";
+        }
+        if (modalDesc) {
+          modalDesc.innerText = "Data saat ini hanya tersimpan di memori browser lokal perangkat ini.";
+        }
+        if (modalIconWrap) {
+          modalIconWrap.className = "w-10 h-10 rounded-xl flex items-center justify-center bg-slate-200 text-slate-600";
+        }
+        if (modalIcon) modalIcon.setAttribute('data-lucide', 'cloud-off');
+        if (modalBox) {
+          modalBox.className = "p-4 rounded-2xl border transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 border-slate-200";
+        }
+        if (sheetLinkWrap) sheetLinkWrap.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    function openGoogleSheetsModal() {
+      initGoogleSheetsUI();
+      const modal = document.getElementById('modal-googlesheets');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeGoogleSheetsModal() {
+      const modal = document.getElementById('modal-googlesheets');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function switchGoogleSheetsTab(tab) {
+      const tabConfig = document.getElementById('gs-tab-content-config');
+      const tabGuide = document.getElementById('gs-tab-content-guide');
+      const btnConfig = document.getElementById('tab-btn-gs-config');
+      const btnGuide = document.getElementById('tab-btn-gs-guide');
+
+      if (tab === 'config') {
+        tabConfig.classList.remove('hidden');
+        tabGuide.classList.add('hidden');
+        btnConfig.className = "px-4 py-2 text-xs font-bold border-b-2 border-emerald-600 text-emerald-800 flex items-center gap-2 transition";
+        btnGuide.className = "px-4 py-2 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition";
+      } else {
+        tabConfig.classList.add('hidden');
+        tabGuide.classList.remove('hidden');
+        btnConfig.className = "px-4 py-2 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition";
+        btnGuide.className = "px-4 py-2 text-xs font-bold border-b-2 border-emerald-600 text-emerald-800 flex items-center gap-2 transition";
+      }
+      lucide.createIcons();
+    }
+
+    function saveGoogleSheetsConfig(isSilent = false) {
+      const urlInput = document.getElementById('input-gsheets-url').value.trim();
+      const sheetUrlInput = document.getElementById('input-gsheets-sheet-url').value.trim();
+      const autoSyncCheck = document.getElementById('check-gsheets-autosync').checked;
+
+      gsheetsConfig.url = urlInput;
+      gsheetsConfig.sheetUrl = sheetUrlInput;
+      gsheetsConfig.autoSync = autoSyncCheck;
+
+      localStorage.setItem("sim_guru_gsheets_url", urlInput);
+      localStorage.setItem("sim_guru_gsheets_sheet_url", sheetUrlInput);
+      localStorage.setItem("sim_guru_gsheets_autosync", autoSyncCheck ? "true" : "false");
+
+      updateGoogleSheetsStatusUI();
+
+      if (!isSilent) {
+        showToast("Pengaturan Google Sheets berhasil disimpan!", "check-circle");
+        closeGoogleSheetsModal();
+      }
+    }
+
+    async function testGoogleSheetsConnection() {
+      const inputUrl = document.getElementById('input-gsheets-url').value.trim();
+      if (!inputUrl) {
+        showToast("Masukkan URL Web App Apps Script terlebih dahulu!", "alert-circle");
+        return;
+      }
+
+      const btnTest = document.getElementById('btn-test-gsheets');
+      btnTest.disabled = true;
+      btnTest.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Cek...`;
+      lucide.createIcons();
+
+      try {
+        const pingUrl = inputUrl + (inputUrl.includes('?') ? '&' : '?') + 'action=ping&t=' + Date.now();
+        const res = await fetch(pingUrl, { redirect: "follow" });
+        const json = await res.json();
+
+        if (json.status === "success") {
+          showToast("Koneksi Google Sheets berhasil! (" + (json.sheetTitle || "Tersambung") + ")", "check-circle");
+          if (json.spreadsheetUrl && !document.getElementById('input-gsheets-sheet-url').value) {
+            document.getElementById('input-gsheets-sheet-url').value = json.spreadsheetUrl;
+          }
+          saveGoogleSheetsConfig(true);
+        } else {
+          showToast(json.message || "Respon tidak valid dari script Google Sheets.", "alert-triangle");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Gagal menghubungi Google Apps Script. Pastikan akses diatur ke 'Anyone/Siapa saja'.", "alert-circle");
+      } finally {
+        btnTest.disabled = false;
+        btnTest.innerHTML = `<i data-lucide="activity" class="w-3.5 h-3.5"></i> Tes`;
+        lucide.createIcons();
+      }
+    }
+
+    async function sendPostToGoogleSheets(payload) {
+      const url = gsheetsConfig.url;
+      if (!url) throw new Error("URL Google Sheets belum diatur.");
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload),
+        redirect: "follow"
+      });
+
+      try {
+        return await response.json();
+      } catch (e) {
+        return { status: "success", message: "Data terkirim ke Google Sheets" };
+      }
+    }
+
+    async function syncAllToGoogleSheets(isManual = false) {
+      if (!gsheetsConfig.url) {
+        openGoogleSheetsModal();
+        showToast("Hubungkan ke Google Sheets terlebih dahulu!", "alert-circle");
+        return;
+      }
+
+      const syncIcon = document.getElementById('icon-quick-sync');
+      if (syncIcon) syncIcon.classList.add('animate-spin');
+
+      if (isManual) showToast("Mengirim seluruh data ke Google Sheets...", "cloud-upload");
+
+      try {
+        const payload = {
+          action: "syncAll",
+          data: {
+            classesMeta: classesMeta,
+            studentsDatabase: studentsDatabase,
+            attendanceDatabase: attendanceDatabase,
+            customQuestions: customQuestions
+          }
+        };
+
+        const res = await sendPostToGoogleSheets(payload);
+        const now = new Date().toLocaleString("id-ID");
+        gsheetsConfig.lastSync = now;
+        localStorage.setItem("sim_guru_gsheets_last_sync", now);
+        updateGoogleSheetsStatusUI();
+
+        showToast("Seluruh data berhasil tersimpan di Google Sheets!", "check-check");
+      } catch (err) {
+        console.error("Gagal syncAll:", err);
+        showToast("Sinkronisasi gagal: " + err.message, "alert-circle");
+      } finally {
+        if (syncIcon) syncIcon.classList.remove('animate-spin');
+      }
+    }
+
+    async function fetchDataFromGoogleSheets(options = {}) {
+      if (!gsheetsConfig.url) {
+        if (!options.silent) {
+          openGoogleSheetsModal();
+          showToast("Hubungkan Google Sheets terlebih dahulu!", "alert-circle");
+        }
+        return false;
+      }
+
+      if (!options.silent) showToast("Mengunduh data dari Google Sheets...", "cloud-download");
+
+      try {
+        const fetchUrl = gsheetsConfig.url + (gsheetsConfig.url.includes('?') ? '&' : '?') + 'action=getData&t=' + Date.now();
+        const res = await fetch(fetchUrl, { redirect: "follow" });
+        const json = await res.json();
+
+        if (json.status === "success" && json.data) {
+          const d = json.data;
+          let changed = false;
+
+          if (d.classesMeta && Array.isArray(d.classesMeta) && d.classesMeta.length > 0) {
+            classesMeta = d.classesMeta;
+            changed = true;
+          }
+          if (d.studentsDatabase && typeof d.studentsDatabase === 'object' && Object.keys(d.studentsDatabase).length > 0) {
+            studentsDatabase = d.studentsDatabase;
+            changed = true;
+          }
+          if (d.attendanceDatabase && typeof d.attendanceDatabase === 'object') {
+            attendanceDatabase = d.attendanceDatabase;
+            changed = true;
+          }
+          if (d.customQuestions && Array.isArray(d.customQuestions)) {
+            customQuestions = d.customQuestions;
+            changed = true;
+          }
+
+          if (changed) {
+            saveStateToLocalStorage();
+            refreshClassSelectorUI();
+            renderAllViews();
+          }
+
+          const now = new Date().toLocaleString("id-ID");
+          gsheetsConfig.lastSync = now;
+          localStorage.setItem("sim_guru_gsheets_last_sync", now);
+          updateGoogleSheetsStatusUI();
+
+          if (!options.silent) {
+            showToast("Data terbaru berhasil dimuat dari Google Sheets!", "check-circle");
+          }
+          return true;
+        } else {
+          if (!options.silent) showToast(json.message || "Gagal mengambil data dari Google Sheets", "alert-circle");
+          return false;
+        }
+      } catch (err) {
+        console.error("Gagal fetchDataFromGoogleSheets:", err);
+        if (!options.silent) {
+          showToast("Gagal terhubung ke Google Sheets: " + err.message, "alert-circle");
+        }
+        return false;
+      }
+    }
+
+    let _autoSyncTimer = null;
+    function triggerAutoSyncToGoogleSheets() {
+      if (gsheetsConfig.url && gsheetsConfig.autoSync) {
+        if (_autoSyncTimer) clearTimeout(_autoSyncTimer);
+        _autoSyncTimer = setTimeout(() => {
+          syncAllToGoogleSheets(false);
+        }, 1000);
+      }
+    }
+
+    function handleQuickSync() {
+      if (!gsheetsConfig.url) {
+        openGoogleSheetsModal();
+      } else {
+        syncAllToGoogleSheets(true);
+      }
+    }
+
+    function copyAppsScriptCode() {
+      const code = getAppsScriptSourceCode();
+      navigator.clipboard.writeText(code).then(() => {
+        showToast("Kode skrip Google Apps Script berhasil disalin!", "check-circle");
+      }).catch(() => {
+        const preview = document.getElementById('apps-script-code-preview');
+        if (preview) {
+          preview.select();
+          document.execCommand('copy');
+          showToast("Kode skrip berhasil disalin!", "check-circle");
+        }
+      });
+    }
+
+    function getAppsScriptSourceCode() {
+      return `/**
+ * BACKEND API GOOGLE APPS SCRIPT: SIM-GURU BAHASA INDONESIA
+ * Tempelkan kode ini di Ekstensi > Apps Script pada Google Sheets Anda.
+ * Terapkan sebagai Web App dengan Akses: Siapa saja (Anyone).
+ */
+var SHEET_NAMES = { PRESENSI: "Presensi", SISWA: "Data_Siswa", KELAS: "Data_Kelas", SOAL: "Bank_Soal", STATE: "_APP_STATE" };
+
+function doGet(e) {
+  try {
+    var p = e ? e.parameter : {};
+    var action = p.action || "ping";
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    if (action === "ping") {
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Tersambung", sheetTitle: ss.getName(), spreadsheetUrl: ss.getUrl() })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === "getData") {
+      initAllSheets(ss);
+      var stateSheet = ss.getSheetByName(SHEET_NAMES.STATE);
+      var stateVal = stateSheet.getRange("A1").getValue();
+      if (stateVal && typeof stateVal === "string" && stateVal.trim().startsWith("{")) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", data: JSON.parse(stateVal) })).setMimeType(ContentService.MimeType.JSON);
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", data: extractDataFromTables(ss) })).setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Aksi tidak dikenal" })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  try {
+    var payload = JSON.parse(e.postData.contents);
+    var action = payload.action;
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    initAllSheets(ss);
+
+    if (action === "syncAll" || action === "saveState") {
+      var d = payload.data || {};
+      var st = ss.getSheetByName(SHEET_NAMES.STATE);
+      st.getRange("A1").setValue(JSON.stringify(d));
+      st.getRange("A2").setValue("Update: " + new Date().toLocaleString("id-ID"));
+
+      if (d.classesMeta) writeClassesSheet(ss, d.classesMeta);
+      if (d.studentsDatabase) writeStudentsSheet(ss, d.classesMeta || [], d.studentsDatabase);
+      if (d.attendanceDatabase) writeAttendanceSheet(ss, d.classesMeta || [], d.studentsDatabase || {}, d.attendanceDatabase);
+      if (d.customQuestions) writeQuestionsSheet(ss, d.customQuestions);
+
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Data tersimpan di Google Sheets" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === "saveAttendance") {
+      var cid = payload.classId, cname = payload.className || cid, dt = payload.date, top = payload.topic || "-", recs = payload.records || [];
+      var ps = ss.getSheetByName(SHEET_NAMES.PRESENSI);
+      var rows = ps.getDataRange().getValues().filter(function(r, idx) {
+        if (idx === 0) return true;
+        var rDate = r[1] instanceof Date ? Utilities.formatDate(r[1], Session.getScriptTimeZone() || "GMT+7", "yyyy-MM-dd") : String(r[1]).trim();
+        return !(rDate === String(dt) && String(r[2]) === String(cid));
+      });
+      var now = new Date().toLocaleString("id-ID");
+      recs.forEach(function(r) {
+        rows.push([now, dt, cid, cname, "'" + (r.nis || ""), "'" + (r.nisn || ""), r.name || "", r.gender || "", r.status || "H", r.note || "", top]);
+      });
+      ps.clearContents();
+      if (rows.length > 0) ps.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+      formatHeader(ps, "#0284c7");
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Presensi tersimpan" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === "saveQuestion") {
+      var q = payload.question;
+      var qs = ss.getSheetByName(SHEET_NAMES.SOAL);
+      qs.appendRow([q.id || ("soal_" + Date.now()), q.grade || "10", q.type || "Formatif", q.level || "HOTS", q.topic || "", q.stimulus || "", q.question || "", q.answer || "", new Date().toLocaleString("id-ID")]);
+      formatHeader(qs, "#7c3aed");
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Soal tersimpan" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Aksi tidak dikenal" })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function initAllSheets(ss) {
+  var p = getOrCreate(ss, SHEET_NAMES.PRESENSI);
+  if (p.getLastRow() === 0) { p.appendRow(["Timestamp", "Tanggal", "ID Kelas", "Nama Kelas", "NIS", "NISN", "Nama Siswa", "L/P", "Status", "Catatan", "Materi"]); formatHeader(p, "#0284c7"); }
+  var s = getOrCreate(ss, SHEET_NAMES.SISWA);
+  if (s.getLastRow() === 0) { s.appendRow(["ID Kelas", "Nama Kelas", "NIS", "NISN", "Nama Siswa", "L/P", "Update"]); formatHeader(s, "#059669"); }
+  var k = getOrCreate(ss, SHEET_NAMES.KELAS);
+  if (k.getLastRow() === 0) { k.appendRow(["ID Kelas", "Nama Kelas", "Tingkat", "Update"]); formatHeader(k, "#d97706"); }
+  var q = getOrCreate(ss, SHEET_NAMES.SOAL);
+  if (q.getLastRow() === 0) { q.appendRow(["ID", "Kelas", "Kategori", "Level", "Topik", "Stimulus", "Soal", "Kunci", "Update"]); formatHeader(q, "#7c3aed"); }
+  getOrCreate(ss, SHEET_NAMES.STATE);
+}
+
+function getOrCreate(ss, n) { var sh = ss.getSheetByName(n); if (!sh) sh = ss.insertSheet(n); return sh; }
+
+function formatHeader(sh, bg) {
+  try {
+    var r = sh.getRange(1, 1, 1, sh.getLastColumn() || 1);
+    r.setBackground(bg).setFontColor("#fff").setFontWeight("bold").setFontSize(10).setHorizontalAlignment("center");
+    sh.setFrozenRows(1);
+    sh.setRowHeight(1, 30);
+  } catch(e) {}
+}
+
+function writeClassesSheet(ss, cMeta) {
+  var sh = ss.getSheetByName(SHEET_NAMES.KELAS); sh.clearContents();
+  sh.appendRow(["ID Kelas", "Nama Kelas", "Tingkat", "Terakhir Diperbarui"]);
+  var now = new Date().toLocaleString("id-ID");
+  var rows = cMeta.map(function(c) { return [c.id, c.name, "Kelas " + c.grade, now]; });
+  if (rows.length > 0) sh.getRange(2, 1, rows.length, 4).setValues(rows);
+  formatHeader(sh, "#d97706");
+}
+
+function writeStudentsSheet(ss, cMeta, sDb) {
+  var sh = ss.getSheetByName(SHEET_NAMES.SISWA); sh.clearContents();
+  sh.appendRow(["ID Kelas", "Nama Kelas", "NIS", "NISN", "Nama Siswa", "Jenis Kelamin", "Terakhir Diperbarui"]);
+  var now = new Date().toLocaleString("id-ID"), rows = [];
+  cMeta.forEach(function(c) {
+    (sDb[c.id] || []).forEach(function(s) {
+      rows.push([c.id, c.name, "'" + (s.nis || ""), "'" + (s.nisn || ""), s.name || "", s.gender || "L", now]);
+    });
+  });
+  if (rows.length > 0) sh.getRange(2, 1, rows.length, 7).setValues(rows);
+  formatHeader(sh, "#059669");
+}
+
+function writeAttendanceSheet(ss, cMeta, sDb, aDb) {
+  var sh = ss.getSheetByName(SHEET_NAMES.PRESENSI); sh.clearContents();
+  sh.appendRow(["Timestamp", "Tanggal", "ID Kelas", "Nama Kelas", "NIS", "NISN", "Nama Siswa", "L/P", "Status", "Catatan", "Materi"]);
+  var now = new Date().toLocaleString("id-ID"), rows = [];
+  Object.keys(aDb).forEach(function(cid) {
+    var cls = cMeta.find(function(c) { return c.id === cid; }) || { name: cid };
+    var stList = sDb[cid] || [];
+    Object.keys(aDb[cid]).forEach(function(dt) {
+      var dMap = aDb[cid][dt];
+      stList.forEach(function(s) {
+        var rec = dMap[s.nis] || { status: "H", note: "" };
+        rows.push([now, dt, cid, cls.name, "'" + (s.nis || ""), "'" + (s.nisn || ""), s.name || "", s.gender || "L", rec.status || "H", rec.note || "", "-"]);
+      });
+    });
+  });
+  if (rows.length > 0) sh.getRange(2, 1, rows.length, 11).setValues(rows);
+  formatHeader(sh, "#0284c7");
+}
+
+function writeQuestionsSheet(ss, qs) {
+  var sh = ss.getSheetByName(SHEET_NAMES.SOAL); sh.clearContents();
+  sh.appendRow(["ID", "Kelas", "Kategori", "Level", "Topik", "Stimulus", "Soal", "Kunci", "Tanggal"]);
+  var now = new Date().toLocaleString("id-ID");
+  var rows = qs.map(function(q) {
+    return [q.id || "", q.grade || "10", q.type || "Formatif", q.level || "HOTS", q.topic || "", q.stimulus || "", q.question || "", q.answer || "", now];
+  });
+  if (rows.length > 0) sh.getRange(2, 1, rows.length, 9).setValues(rows);
+  formatHeader(sh, "#7c3aed");
+}
+
+function extractDataFromTables(ss) {
+  var cm = [], sd = {}, ad = {}, cq = [];
+  var ks = ss.getSheetByName(SHEET_NAMES.KELAS);
+  if (ks && ks.getLastRow() > 1) {
+    ks.getRange(2, 1, ks.getLastRow() - 1, 3).getValues().forEach(function(r) {
+      if (r[0]) {
+        var id = String(r[0]), gr = String(r[2]).match(/\\d+/) ? String(r[2]).match(/\\d+/)[0] : "10";
+        cm.push({ id: id, grade: gr, name: String(r[1] || id) });
+        sd[id] = [];
+      }
+    });
+  }
+  var ss_ = ss.getSheetByName(SHEET_NAMES.SISWA);
+  if (ss_ && ss_.getLastRow() > 1) {
+    ss_.getRange(2, 1, ss_.getLastRow() - 1, 6).getValues().forEach(function(r) {
+      var cid = String(r[0]);
+      if (cid && sd[cid]) {
+        sd[cid].push({ nis: String(r[2]).replace(/^'/, ""), nisn: String(r[3]).replace(/^'/, ""), name: String(r[4]), gender: String(r[5] || "L") });
+      }
+    });
+  }
+  var ps = ss.getSheetByName(SHEET_NAMES.PRESENSI);
+  if (ps && ps.getLastRow() > 1) {
+    ps.getRange(2, 1, ps.getLastRow() - 1, 10).getValues().forEach(function(r) {
+      var dt = r[1] instanceof Date ? Utilities.formatDate(r[1], Session.getScriptTimeZone() || "GMT+7", "yyyy-MM-dd") : String(r[1]).trim();
+      var cid = String(r[2]), nis = String(r[4]).replace(/^'/, "");
+      if (cid && dt && nis) {
+        if (!ad[cid]) ad[cid] = {};
+        if (!ad[cid][dt]) ad[cid][dt] = {};
+        ad[cid][dt][nis] = { status: String(r[8] || "H"), note: String(r[9] || "") };
+      }
+    });
+  }
+  return { classesMeta: cm, studentsDatabase: sd, attendanceDatabase: ad, customQuestions: cq };
+}`;
+    }
+
+    function onCurrentClassChanged() {
+      const cls = classesMeta.find(c => c.id === currentClass);
+      const title = cls ? cls.name : `Kelas ${currentClass}`;
+      document.getElementById('label-class-info').innerText = title;
+      document.getElementById('rekap-subtitle').innerText = `Mata Pelajaran: Bahasa Indonesia | ${title}`;
+      renderAttendanceTable();
+      renderRekapTable();
+      renderManageStudentsTable();
+    }
+
+    function refreshClassSelectorUI() {
+      const select = document.getElementById('global-class-select');
+      select.innerHTML = '';
+      classesMeta.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        if (c.id === currentClass) opt.selected = true;
+        select.appendChild(opt);
+      });
+      renderClassListPanel();
+    }
+
+    function renderAllViews() {
+      onCurrentClassChanged();
+      renderMaterials('all');
+      renderQuestions();
+      lucide.createIcons();
+    }
+
+    function showToast(msg, icon = "check-circle") {
+      const toast = document.getElementById('app-toast');
+      document.getElementById('toast-message').innerText = msg;
+      document.getElementById('toast-icon').setAttribute('data-lucide', icon);
+      lucide.createIcons();
+
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 2600);
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-sky-600', 'text-white', 'shadow-xs');
+        btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+      });
+
+      const activeSection = document.getElementById(`tab-content-${tabId}`);
+      if (activeSection) activeSection.classList.remove('hidden');
+
+      const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-sky-600', 'text-white', 'shadow-xs');
+        activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+      }
+
+      if (tabId === 'rekap') renderRekapTable();
+      if (tabId === 'datasiswa') {
+        renderClassListPanel();
+        renderManageStudentsTable();
+      }
+      lucide.createIcons();
+    }
+
+    /* =========================================================
+       3. CRUD LOGIC: MANAJEMEN KELAS & SISWA
+       ========================================================= */
+
+    // Tambah Kelas Baru
+    function handleAddNewClass(e) {
+      e.preventDefault();
+      const nameInput = document.getElementById('input-new-class-name');
+      const gradeInput = document.getElementById('input-new-class-grade');
+      const rawName = nameInput.value.trim();
+      const grade = gradeInput.value;
+
+      if (!rawName) return;
+
+      const classId = rawName.replace(/\s+/g, '-').toUpperCase();
+      if (classesMeta.some(c => c.id.toLowerCase() === classId.toLowerCase())) {
+        showToast("Kelas dengan nama tersebut sudah ada!", "alert-circle");
+        return;
+      }
+
+      const newCls = {
+        id: classId,
+        grade: grade,
+        name: `Kelas ${rawName} (Fase ${grade === '10' ? 'E' : (grade === '11' ? 'F' : 'F Lanjut')})`
+      };
+
+      classesMeta.push(newCls);
+      studentsDatabase[classId] = [];
+      saveStateToLocalStorage();
+
+      currentClass = classId;
+      refreshClassSelectorUI();
+      onCurrentClassChanged();
+      nameInput.value = '';
+      showToast(`Kelas ${rawName} berhasil ditambahkan!`);
+      triggerAutoSyncToGoogleSheets();
+    }
+
+    // Render Panel Daftar Kelas
+    function renderClassListPanel() {
+      const container = document.getElementById('class-list-container');
+      const badge = document.getElementById('total-classes-badge');
+      badge.innerText = `${classesMeta.length} Kelas`;
+      container.innerHTML = '';
+
+      classesMeta.forEach(c => {
+        const studentCount = (studentsDatabase[c.id] || []).length;
+        const div = document.createElement('div');
+        div.className = `flex items-center justify-between p-2.5 rounded-xl border text-xs transition ${c.id === currentClass ? 'bg-sky-50/70 border-sky-300' : 'bg-slate-50 border-slate-200'}`;
+        div.innerHTML = `
+          <div class="cursor-pointer flex-1" onclick="selectClassFromList('${c.id}')">
+            <span class="font-bold text-slate-800">${c.name}</span>
+            <div class="text-[10px] text-slate-500">${studentCount} Siswa terdaftar</div>
+          </div>
+          <div class="flex items-center gap-1">
+            ${classesMeta.length > 1 ? `
+              <button onclick="confirmDeleteClass('${c.id}', '${c.name}')" title="Hapus Kelas" class="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-200 transition">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            ` : ''}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    function selectClassFromList(clsId) {
+      currentClass = clsId;
+      document.getElementById('global-class-select').value = clsId;
+      onCurrentClassChanged();
+      renderClassListPanel();
+    }
+
+    // Konfirmasi Hapus Kelas
+    function confirmDeleteClass(clsId, clsName) {
+      showCustomConfirm(
+        `Hapus ${clsName}?`,
+        `Semua data siswa dan presensi di kelas ini akan ikut dihapus secara permanen.`,
+        () => {
+          classesMeta = classesMeta.filter(c => c.id !== clsId);
+          delete studentsDatabase[clsId];
+          delete attendanceDatabase[clsId];
+          saveStateToLocalStorage();
+
+          if (currentClass === clsId) {
+            currentClass = classesMeta[0] ? classesMeta[0].id : "";
+          }
+
+          refreshClassSelectorUI();
+          onCurrentClassChanged();
+          showToast(`Kelas ${clsName} berhasil dihapus.`);
+          triggerAutoSyncToGoogleSheets();
+        }
+      );
+    }
+
+    // Render Tabel Kelola Siswa di Tab Siswa
+    function renderManageStudentsTable() {
+      const cls = classesMeta.find(c => c.id === currentClass);
+      const titleEl = document.getElementById('manage-student-class-title');
+      const countEl = document.getElementById('manage-student-count');
+      const tbody = document.getElementById('manage-students-table-body');
+
+      const students = studentsDatabase[currentClass] || [];
+      titleEl.innerText = cls ? `Daftar Siswa - ${cls.name}` : `Daftar Siswa (${currentClass})`;
+      countEl.innerText = `${students.length} Siswa`;
+      tbody.innerHTML = '';
+
+      if (students.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-8 text-center text-slate-400">
+              <i data-lucide="user-x" class="w-8 h-8 mx-auto mb-1 opacity-50"></i>
+              Belum ada siswa di kelas ini. Klik tombol "Tambah Siswa Baru" di kanan atas.
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      students.forEach((s, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition-colors";
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-center font-medium text-slate-400">${idx + 1}</td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500">${s.nis} / ${s.nisn || '-'}</td>
+          <td class="py-3 px-4 font-bold text-slate-800">${s.name}</td>
+          <td class="py-3 px-3 text-center">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.gender === 'L' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'}">${s.gender}</span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="openEditStudentModal('${s.nis}')" title="Ubah Nama/Data Siswa" class="p-1.5 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+              </button>
+              <button onclick="confirmDeleteStudent('${s.nis}', '${s.name}')" title="Hapus Siswa" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    // Modal Tambah Siswa
+    function openAddStudentModal() {
+      const cls = classesMeta.find(c => c.id === currentClass);
+      document.getElementById('new-std-class-name').value = cls ? cls.name : currentClass;
+      document.getElementById('new-std-name').value = '';
+      document.getElementById('new-std-nis').value = '';
+      document.getElementById('new-std-nisn').value = '';
+      document.getElementById('modal-add-student').classList.remove('hidden');
+      document.getElementById('modal-add-student').classList.add('flex');
+    }
+
+    function closeAddStudentModal() {
+      document.getElementById('modal-add-student').classList.add('hidden');
+      document.getElementById('modal-add-student').classList.remove('flex');
+    }
+
+    function handleSaveNewStudent(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-std-name').value.trim();
+      const nis = document.getElementById('new-std-nis').value.trim();
+      const nisn = document.getElementById('new-std-nisn').value.trim();
+      const gender = document.getElementById('new-std-gender').value;
+
+      if (!name || !nis) return;
+
+      if (!studentsDatabase[currentClass]) studentsDatabase[currentClass] = [];
+      const list = studentsDatabase[currentClass];
+
+      if (list.some(s => s.nis === nis)) {
+        showToast("NIS sudah terdaftar pada siswa lain di kelas ini!", "alert-circle");
+        return;
+      }
+
+      list.push({ nis, nisn, name, gender });
+      saveStateToLocalStorage();
+      closeAddStudentModal();
+      onCurrentClassChanged();
+      showToast(`Siswa "${name}" berhasil ditambahkan!`);
+      triggerAutoSyncToGoogleSheets();
+    }
+
+    // Modal Edit Siswa (Ubah Nama Siswa, NIS, NISN)
+    function openEditStudentModal(nis) {
+      const students = studentsDatabase[currentClass] || [];
+      const student = students.find(s => s.nis === nis);
+      if (!student) return;
+
+      document.getElementById('edit-std-original-nis').value = student.nis;
+      document.getElementById('edit-std-name').value = student.name;
+      document.getElementById('edit-std-nis').value = student.nis;
+      document.getElementById('edit-std-nisn').value = student.nisn || '';
+      document.getElementById('edit-std-gender').value = student.gender || 'L';
+
+      document.getElementById('modal-edit-student').classList.remove('hidden');
+      document.getElementById('modal-edit-student').classList.add('flex');
+    }
+
+    function closeEditStudentModal() {
+      document.getElementById('modal-edit-student').classList.add('hidden');
+      document.getElementById('modal-edit-student').classList.remove('flex');
+    }
+
+    function handleSaveEditStudent(e) {
+      e.preventDefault();
+      const origNis = document.getElementById('edit-std-original-nis').value;
+      const newName = document.getElementById('edit-std-name').value.trim();
+      const newNis = document.getElementById('edit-std-nis').value.trim();
+      const newNisn = document.getElementById('edit-std-nisn').value.trim();
+      const newGender = document.getElementById('edit-std-gender').value;
+
+      const students = studentsDatabase[currentClass] || [];
+      const studentIndex = students.findIndex(s => s.nis === origNis);
+
+      if (studentIndex === -1) return;
+
+      // Cek duplikasi NIS jika diubah
+      if (newNis !== origNis && students.some(s => s.nis === newNis)) {
+        showToast("NIS baru sudah digunakan oleh siswa lain!", "alert-circle");
+        return;
+      }
+
+      // Update data siswa
+      students[studentIndex] = {
+        nis: newNis,
+        nisn: newNisn,
+        name: newName,
+        gender: newGender
+      };
+
+      // Jika NIS diubah, sesuaikan histori presensi
+      if (newNis !== origNis && attendanceDatabase[currentClass]) {
+        Object.keys(attendanceDatabase[currentClass]).forEach(date => {
+          if (attendanceDatabase[currentClass][date][origNis]) {
+            attendanceDatabase[currentClass][date][newNis] = attendanceDatabase[currentClass][date][origNis];
+            delete attendanceDatabase[currentClass][date][origNis];
+          }
+        });
+      }
+
+      saveStateToLocalStorage();
+      closeEditStudentModal();
+      onCurrentClassChanged();
+      showToast(`Data siswa "${newName}" berhasil diperbarui!`);
+      triggerAutoSyncToGoogleSheets();
+    }
+
+    // Konfirmasi Hapus Siswa
+    function confirmDeleteStudent(nis, name) {
+      showCustomConfirm(
+        `Hapus ${name}?`,
+        `Siswa dengan NIS ${nis} akan dihapus dari daftar rombel kelas ini.`,
+        () => {
+          studentsDatabase[currentClass] = (studentsDatabase[currentClass] || []).filter(s => s.nis !== nis);
+          
+          // Bersihkan presensi
+          if (attendanceDatabase[currentClass]) {
+            Object.keys(attendanceDatabase[currentClass]).forEach(date => {
+              delete attendanceDatabase[currentClass][date][nis];
+            });
+          }
+
+          saveStateToLocalStorage();
+          onCurrentClassChanged();
+          showToast(`Siswa "${name}" berhasil dihapus.`);
+          triggerAutoSyncToGoogleSheets();
+        }
+      );
+    }
+
+    // Custom Modal Confirmation (Menggantikan confirm() bawaan)
+    let confirmCallback = null;
+    function showCustomConfirm(title, desc, onConfirm) {
+      document.getElementById('confirm-modal-title').innerText = title;
+      document.getElementById('confirm-modal-desc').innerText = desc;
+      confirmCallback = onConfirm;
+
+      const modal = document.getElementById('modal-confirm');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      document.getElementById('confirm-modal-cancel').onclick = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        confirmCallback = null;
+      };
+
+      document.getElementById('confirm-modal-ok').onclick = () => {
+        if (confirmCallback) confirmCallback();
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        confirmCallback = null;
+      };
+    }
+
+    /* =========================================================
+       4. PRESENSI & REKAPITULASI DENGAN DATA SISWA TERKINI
+       ========================================================= */
+    function getDayAttendance(cls, date) {
+      if (!attendanceDatabase[cls]) attendanceDatabase[cls] = {};
+      if (!attendanceDatabase[cls][date]) {
+        const students = studentsDatabase[cls] || [];
+        const defaultMap = {};
+        students.forEach(s => defaultMap[s.nis] = { status: 'H', note: '' });
+        attendanceDatabase[cls][date] = defaultMap;
+      }
+      return attendanceDatabase[cls][date];
+    }
+
+    function renderAttendanceTable() {
+      const date = document.getElementById('attendance-date').value;
+      const students = studentsDatabase[currentClass] || [];
+      const dayData = getDayAttendance(currentClass, date);
+
+      const tbody = document.getElementById('attendance-table-body');
+      tbody.innerHTML = '';
+
+      if (students.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-8 text-center text-slate-400">
+              Belum ada siswa di kelas ini. Buka tab <strong>"Manajemen Kelas & Siswa"</strong> untuk menambahkan.
+            </td>
+          </tr>
+        `;
+        document.getElementById('count-hadir').innerText = '0';
+        document.getElementById('count-sakit').innerText = '0';
+        document.getElementById('count-izin').innerText = '0';
+        document.getElementById('count-alpa').innerText = '0';
+        return;
+      }
+
+      let countH = 0, countS = 0, countI = 0, countA = 0;
+
+      students.forEach((s, idx) => {
+        const rec = dayData[s.nis] || { status: 'H', note: '' };
+        const status = rec.status;
+
+        if (status === 'H') countH++;
+        else if (status === 'S') countS++;
+        else if (status === 'I') countI++;
+        else if (status === 'A') countA++;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/80 transition-colors";
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-center font-medium text-slate-400">${idx + 1}</td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500">${s.nis} / ${s.nisn || '-'}</td>
+          <td class="py-3 px-4 font-semibold text-slate-800">${s.name}</td>
+          <td class="py-3 px-4 text-center text-slate-500 font-medium">${s.gender}</td>
+          <td class="py-3 px-4">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="setStudentStatus('${s.nis}', 'H')" class="px-2.5 py-1 rounded-lg font-bold text-xs transition ${status === 'H' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100'}">H</button>
+              <button onclick="setStudentStatus('${s.nis}', 'S')" class="px-2.5 py-1 rounded-lg font-bold text-xs transition ${status === 'S' ? 'bg-blue-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-blue-100'}">S</button>
+              <button onclick="setStudentStatus('${s.nis}', 'I')" class="px-2.5 py-1 rounded-lg font-bold text-xs transition ${status === 'I' ? 'bg-amber-500 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-amber-100'}">I</button>
+              <button onclick="setStudentStatus('${s.nis}', 'A')" class="px-2.5 py-1 rounded-lg font-bold text-xs transition ${status === 'A' ? 'bg-rose-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-rose-100'}">A</button>
+            </div>
+          </td>
+          <td class="py-3 px-4">
+            <input type="text" value="${rec.note || ''}" onchange="setStudentNote('${s.nis}', this.value)" placeholder="Catatan keaktifan siswa..." class="w-full bg-slate-50 focus:bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs outline-none focus:ring-1 focus:ring-sky-500">
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('count-hadir').innerText = countH;
+      document.getElementById('count-sakit').innerText = countS;
+      document.getElementById('count-izin').innerText = countI;
+      document.getElementById('count-alpa').innerText = countA;
+    }
+
+    function setStudentStatus(nis, status) {
+      const date = document.getElementById('attendance-date').value;
+      const dayData = getDayAttendance(currentClass, date);
+      if (!dayData[nis]) dayData[nis] = { status: 'H', note: '' };
+      dayData[nis].status = status;
+      renderAttendanceTable();
+    }
+
+    function setStudentNote(nis, note) {
+      const date = document.getElementById('attendance-date').value;
+      const dayData = getDayAttendance(currentClass, date);
+      if (!dayData[nis]) dayData[nis] = { status: 'H', note: '' };
+      dayData[nis].note = note;
+    }
+
+    function markAllAttendance(status) {
+      const date = document.getElementById('attendance-date').value;
+      const students = studentsDatabase[currentClass] || [];
+      const dayData = getDayAttendance(currentClass, date);
+      students.forEach(s => {
+        if (!dayData[s.nis]) dayData[s.nis] = { status: 'H', note: '' };
+        dayData[s.nis].status = status;
+      });
+      renderAttendanceTable();
+      showToast(`Semua siswa di set: ${status === 'H' ? 'Hadir' : status}`);
+    }
+
+    async function saveAttendanceRecord() {
+      const date = document.getElementById('attendance-date').value;
+      const topic = document.getElementById('attendance-topic') ? document.getElementById('attendance-topic').value : '';
+      const students = studentsDatabase[currentClass] || [];
+      const dayData = getDayAttendance(currentClass, date);
+
+      // Simpan ke local cache terlebih dahulu agar tidak hilang jika offline
+      saveStateToLocalStorage();
+
+      // Jika Google Sheets terhubung, kirim langsung ke sheet Presensi!
+      if (gsheetsConfig.url) {
+        showToast("Menyimpan presensi ke Google Sheets...", "cloud-upload");
+        const cls = classesMeta.find(c => c.id === currentClass);
+        const className = cls ? cls.name : currentClass;
+        const records = students.map(s => {
+          const rec = dayData[s.nis] || { status: 'H', note: '' };
+          return {
+            nis: s.nis,
+            nisn: s.nisn || '',
+            name: s.name,
+            gender: s.gender || 'L',
+            status: rec.status,
+            note: rec.note || ''
+          };
+        });
+
+        try {
+          await sendPostToGoogleSheets({
+            action: "saveAttendance",
+            classId: currentClass,
+            className: className,
+            date: date,
+            topic: topic,
+            records: records
+          });
+
+          const now = new Date().toLocaleString("id-ID");
+          gsheetsConfig.lastSync = now;
+          localStorage.setItem("sim_guru_gsheets_last_sync", now);
+          updateGoogleSheetsStatusUI();
+
+          showToast(`Presensi ${className} (${date}) tersimpan di Google Sheets!`, "check-check");
+        } catch (err) {
+          console.error("Gagal simpan ke Google Sheets:", err);
+          showToast("Presensi tersimpan di cache lokal (Koneksi Google Sheets offline).", "alert-triangle");
+        }
+      } else {
+        showToast("Tersimpan di browser lokal. Hubungkan ke Google Sheets agar tersimpan online di spreadsheet!", "alert-circle");
+        openGoogleSheetsModal();
+      }
+    }
+
+    function renderRekapTable() {
+      const students = studentsDatabase[currentClass] || [];
+      const clsRecords = attendanceDatabase[currentClass] || {};
+      const dates = Object.keys(clsRecords);
+
+      const tbody = document.getElementById('rekap-table-body');
+      tbody.innerHTML = '';
+
+      if (students.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="py-6 text-center text-slate-400">Tidak ada siswa terdaftar.</td></tr>`;
+        return;
+      }
+
+      students.forEach((s, idx) => {
+        let h = 0, sc = 0, i = 0, a = 0;
+
+        dates.forEach(d => {
+          const rec = clsRecords[d][s.nis];
+          const st = rec ? rec.status : 'H';
+          if (st === 'H') h++;
+          else if (st === 'S') sc++;
+          else if (st === 'I') i++;
+          else if (st === 'A') a++;
+        });
+
+        if (dates.length === 0) h = 1;
+        const total = h + sc + i + a;
+        const rate = Math.round((h / total) * 100);
+
+        let badgeColor = "bg-emerald-100 text-emerald-800";
+        let statusLabel = "Sangat Baik";
+        if (rate < 75) {
+          badgeColor = "bg-rose-100 text-rose-800";
+          statusLabel = "Peringatan";
+        } else if (rate < 85) {
+          badgeColor = "bg-amber-100 text-amber-800";
+          statusLabel = "Cukup";
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/80 transition-colors";
+        tr.innerHTML = `
+          <td class="py-3 px-3 text-center font-medium text-slate-400">${idx + 1}</td>
+          <td class="py-3 px-3 font-mono text-[11px] text-slate-500">${s.nis}</td>
+          <td class="py-3 px-4 font-semibold text-slate-800">${s.name}</td>
+          <td class="py-3 px-2 text-center font-bold text-emerald-700 bg-emerald-50/30">${h}</td>
+          <td class="py-3 px-2 text-center font-bold text-blue-700 bg-blue-50/30">${sc}</td>
+          <td class="py-3 px-2 text-center font-bold text-amber-700 bg-amber-50/30">${i}</td>
+          <td class="py-3 px-2 text-center font-bold text-rose-700 bg-rose-50/30">${a}</td>
+          <td class="py-3 px-3 text-center text-slate-600 font-semibold">${total}</td>
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                <div class="h-full bg-emerald-500 rounded-full" style="width: ${rate}%"></div>
+              </div>
+              <span class="text-[11px] font-bold text-slate-700 w-8 text-right">${rate}%</span>
+            </div>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeColor}">${statusLabel}</span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function exportAttendanceCSV() {
+      const students = studentsDatabase[currentClass] || [];
+      const clsRecords = attendanceDatabase[currentClass] || {};
+      const dates = Object.keys(clsRecords);
+
+      let csv = `REKAPITULASI PRESENSI BAHASA INDONESIA - KELAS ${currentClass}\n`;
+      csv += `No,NIS,NISN,Nama Siswa,JK,Hadir,Sakit,Izin,Alpa,Persentase Kehadiran\n`;
+
+      students.forEach((s, idx) => {
+        let h = 0, sc = 0, i = 0, a = 0;
+        dates.forEach(d => {
+          const st = clsRecords[d][s.nis] ? clsRecords[d][s.nis].status : 'H';
+          if (st === 'H') h++;
+          else if (st === 'S') sc++;
+          else if (st === 'I') i++;
+          else if (st === 'A') a++;
+        });
+        if (dates.length === 0) h = 1;
+        const rate = Math.round((h / (h + sc + i + a)) * 100);
+        csv += `"${idx + 1}","${s.nis}","${s.nisn || ''}","${s.name}","${s.gender}",${h},${sc},${i},${a},"${rate}%"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Rekap_Presensi_${currentClass}_Bindo.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("File Rekap CSV berhasil diunduh!");
+    }
+
+    function printAttendanceReport() {
+      const printArea = document.getElementById('print-area');
+      const students = studentsDatabase[currentClass] || [];
+      const clsRecords = attendanceDatabase[currentClass] || {};
+      const dates = Object.keys(clsRecords);
+      const cls = classesMeta.find(c => c.id === currentClass);
+
+      let tableRows = '';
+      students.forEach((s, idx) => {
+        let h = 0, sc = 0, i = 0, a = 0;
+        dates.forEach(d => {
+          const st = clsRecords[d][s.nis] ? clsRecords[d][s.nis].status : 'H';
+          if (st === 'H') h++;
+          else if (st === 'S') sc++;
+          else if (st === 'I') i++;
+          else if (st === 'A') a++;
+        });
+        if (dates.length === 0) h = 1;
+        const rate = Math.round((h / (h + sc + i + a)) * 100);
+        tableRows += `
+          <tr style="border-bottom: 1px solid #ddd; font-size: 11px;">
+            <td style="padding: 6px; text-align: center;">${idx + 1}</td>
+            <td style="padding: 6px;">${s.nis}</td>
+            <td style="padding: 6px;">${s.name}</td>
+            <td style="padding: 6px; text-align: center;">${s.gender}</td>
+            <td style="padding: 6px; text-align: center;">${h}</td>
+            <td style="padding: 6px; text-align: center;">${sc}</td>
+            <td style="padding: 6px; text-align: center;">${i}</td>
+            <td style="padding: 6px; text-align: center;">${a}</td>
+            <td style="padding: 6px; text-align: center; font-weight: bold;">${rate}%</td>
+          </tr>
+        `;
+      });
+
+      printArea.innerHTML = `
+        <div style="font-family: Arial, sans-serif;">
+          <div style="text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 16px;">
+            <h2 style="margin: 0; font-size: 16px; text-transform: uppercase;">PEMERINTAH PROVINSI DINAS PENDIDIKAN</h2>
+            <h1 style="margin: 4px 0; font-size: 18px;">SMA NEGERI INDONESIA JAYA</h1>
+            <p style="margin: 0; font-size: 11px;">Jalan Pendidikan Teladan No. 1 • Telp: (021) 889977 • Pos 12345</p>
+          </div>
+
+          <h3 style="text-align: center; font-size: 14px; margin-bottom: 4px;">LAPORAN REKAPITULASI PRESENSI SISWA</h3>
+          <p style="text-align: center; font-size: 11px; margin-top: 0;">Mata Pelajaran: Bahasa Indonesia | Kelas: ${cls ? cls.name : currentClass} | TP. 2026/2027</p>
+
+          <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+              <tr style="background: #f0f0f0; border-bottom: 2px solid #333; font-size: 11px;">
+                <th style="padding: 6px; width: 30px;">No</th>
+                <th style="padding: 6px; width: 80px;">NIS</th>
+                <th style="padding: 6px; text-align: left;">Nama Siswa</th>
+                <th style="padding: 6px; width: 40px;">L/P</th>
+                <th style="padding: 6px; width: 40px;">H</th>
+                <th style="padding: 6px; width: 40px;">S</th>
+                <th style="padding: 6px; width: 40px;">I</th>
+                <th style="padding: 6px; width: 40px;">A</th>
+                <th style="padding: 6px; width: 70px;">Kehadiran</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+
+          <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 11px;">
+            <div>
+              <p>Mengetahui,<br>Kepala Sekolah</p>
+              <br><br><br>
+              <p><strong>Drs. H. Mulyadi, M.Pd.</strong><br>NIP. 19740512 200003 1 002</p>
+            </div>
+            <div>
+              <p>Kota Belajar, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}<br>Guru Mata Pelajaran Bahasa Indonesia</p>
+              <br><br><br>
+              <p><strong>Dra. Siti Rahmah, M.Pd.</strong><br>NIP. 19820815 200801 2 015</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      printArea.classList.remove('hidden');
+      window.print();
+      printArea.classList.add('hidden');
+    }
+
+    /* =========================================================
+       5. LKPD, MATERI AJAR & BANK SOAL
+       ========================================================= */
+    function filterMaterials(grade) {
+      activeGradeFilter = grade;
+      document.querySelectorAll('.mat-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-grade') === grade) {
+          btn.className = "mat-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 text-white shadow-xs transition";
+        } else {
+          btn.className = "mat-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition";
+        }
+      });
+      renderMaterials(grade, document.getElementById('search-materi').value.toLowerCase());
+    }
+
+    function renderMaterials(gradeFilter = 'all', query = '') {
+      const container = document.getElementById('materials-container');
+      container.innerHTML = '';
+
+      const filtered = CURRICULUM_MATERIALS.filter(m => {
+        const matchesGrade = (gradeFilter === 'all') || (m.grade === gradeFilter);
+        const matchesSearch = query === '' || 
+          m.topic.toLowerCase().includes(query) || 
+          m.tp.toLowerCase().includes(query) || 
+          m.lkpdTitle.toLowerCase().includes(query);
+        return matchesGrade && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-400">
+            <i data-lucide="folder-search" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+            <p class="text-sm font-semibold">Tidak ditemukan modul materi atau LKPD terkait.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach(m => {
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition flex flex-col justify-between overflow-hidden group";
+        
+        let gradeBadge = m.grade === '10' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                         m.grade === '11' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                         'bg-violet-50 text-violet-700 border-violet-200';
+
+        card.innerHTML = `
+          <div class="p-5">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${gradeBadge}">
+                Kelas ${m.grade} • ${m.phase}
+              </span>
+              <span class="text-[11px] text-slate-400 font-medium">Alokasi: ${m.duration}</span>
+            </div>
+
+            <h3 class="font-bold text-sm text-slate-900 group-hover:text-sky-600 transition mb-2">
+              ${m.topic}
+            </h3>
+
+            <p class="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">
+              ${m.summary}
+            </p>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-1">
+                <i data-lucide="file-text" class="w-3.5 h-3.5 text-sky-600"></i> ${m.lkpdTitle}
+              </div>
+              <p class="text-[11px] text-slate-500 line-clamp-2">${m.tp}</p>
+            </div>
+          </div>
+
+          <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-[11px] text-slate-500 font-medium">Semester ${m.semester}</span>
+            <button onclick="viewLkpdDetail('${m.id}')" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-2xs">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Buka LKPD & Ajar
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    let activeViewingMaterial = null;
+    function viewLkpdDetail(matId) {
+      const mat = CURRICULUM_MATERIALS.find(m => m.id === matId);
+      if (!mat) return;
+      activeViewingMaterial = mat;
+
+      document.getElementById('modal-lkpd-badge').innerText = `Kelas ${mat.grade} (${mat.phase}) • Semester ${mat.semester}`;
+      document.getElementById('modal-lkpd-title').innerText = mat.topic;
+
+      const body = document.getElementById('modal-lkpd-content');
+      body.innerHTML = `
+        <div class="p-4 bg-sky-50/60 rounded-2xl border border-sky-100">
+          <h4 class="font-bold text-sky-900 text-xs uppercase tracking-wide mb-1 flex items-center gap-1.5">
+            <i data-lucide="target" class="w-4 h-4 text-sky-600"></i> Capaian & Tujuan Pembelajaran (TP)
+          </h4>
+          <p class="text-sky-800">${mat.tp}</p>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wide mb-1 flex items-center gap-1.5">
+            <i data-lucide="book-open" class="w-4 h-4 text-indigo-600"></i> Ringkasan Materi Esensial
+          </h4>
+          <p class="text-slate-600 p-3 bg-slate-50 rounded-xl border border-slate-100">${mat.summary}</p>
+        </div>
+
+        <div class="border-t border-slate-200 pt-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+              <i data-lucide="clipboard-list" class="w-4 h-4 text-emerald-600"></i> ${mat.lkpdTitle}
+            </h4>
+            <span class="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">Aktivitas Siswa</span>
+          </div>
+
+          <div class="space-y-2 mt-2">
+            <div class="font-semibold text-slate-700">Instruksi & Langkah Kerja Peserta Didik:</div>
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-600 leading-relaxed">
+              ${mat.activity}
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-200 pt-4">
+          <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-amber-600"></i> Rubrik Penilaian & Kriteria Asesmen
+          </h4>
+          <div class="p-3 bg-amber-50/50 rounded-xl border border-amber-100 text-amber-900 leading-relaxed font-mono text-[11px]">
+            ${mat.rubric}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modal-lkpd').classList.remove('hidden');
+      document.getElementById('modal-lkpd').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeLkpdModal() {
+      document.getElementById('modal-lkpd').classList.add('hidden');
+      document.getElementById('modal-lkpd').classList.remove('flex');
+    }
+
+    function copyLkpdText() {
+      if (!activeViewingMaterial) return;
+      const m = activeViewingMaterial;
+      const fullDoc = `LEMBAR KERJA PESERTA DIDIK (LKPD)
+Mata Pelajaran : Bahasa Indonesia
+Tingkat / Fase : Kelas ${m.grade} (${m.phase})
+Materi Pokok   : ${m.topic}
+Alokasi Waktu  : ${m.duration}
+-------------------------------------------------------------
+1. TUJUAN PEMBELAJARAN:
+${m.tp}
+
+2. RINGKASAN MATERI:
+${m.summary}
+
+3. AKTIVITAS & PETUNJUK PENGERJAAN:
+${m.activity.replace(/<br>/g, '\n')}
+
+4. RUBRIK PENILAIAN:
+${m.rubric.replace(/<br>/g, '\n')}
+-------------------------------------------------------------
+SIM-GURU BAHASA INDONESIA SMA (KURIKULUM MERDEKA)`;
+
+      const dummy = document.createElement("textarea");
+      document.body.appendChild(dummy);
+      dummy.value = fullDoc;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+      showToast("Teks lengkap LKPD berhasil disalin ke clipboard!");
+    }
+
+    function getAllQuestions() {
+      return [...INITIAL_QUESTIONS, ...customQuestions];
+    }
+
+    function renderQuestions() {
+      const gradeFilter = document.getElementById('filter-soal-grade').value;
+      const typeFilter = document.getElementById('filter-soal-type').value;
+      const levelFilter = document.getElementById('filter-soal-level').value;
+
+      const container = document.getElementById('questions-list-container');
+      container.innerHTML = '';
+
+      const questions = getAllQuestions().filter(q => {
+        const matchGrade = (gradeFilter === 'all') || (q.grade === gradeFilter);
+        const matchType = (typeFilter === 'all') || (q.type === typeFilter);
+        const matchLevel = (levelFilter === 'all') || (q.level === levelFilter);
+        return matchGrade && matchType && matchLevel;
+      });
+
+      if (questions.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl p-12 border border-slate-200 text-center text-slate-400">
+            <i data-lucide="help-circle" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+            <p class="text-sm font-semibold">Tidak ada butir soal yang sesuai dengan filter.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      questions.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs transition hover:border-slate-300";
+
+        const badgeLevel = q.level === 'HOTS' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-600 border-slate-200';
+        const badgeType = q.type.includes('Sumatif') ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+        item.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">${idx + 1}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200">Kelas ${q.grade}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeType}">${q.type}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeLevel}">${q.level}</span>
+            </div>
+            <span class="text-xs font-semibold text-slate-500">${q.topic}</span>
+          </div>
+
+          ${q.stimulus ? `
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-700 mb-3 leading-relaxed border-l-4 border-l-sky-500 font-sans">
+              ${q.stimulus}
+            </div>
+          ` : ''}
+
+          <div class="text-xs font-semibold text-slate-900 mb-3 leading-relaxed">
+            ${q.question}
+          </div>
+
+          <details class="group bg-slate-50/50 rounded-xl border border-slate-200/80 overflow-hidden text-xs">
+            <summary class="px-3.5 py-2 cursor-pointer font-semibold text-sky-700 hover:text-sky-800 flex items-center justify-between select-none">
+              <span class="flex items-center gap-1.5"><i data-lucide="key" class="w-3.5 h-3.5"></i> Lihat Kunci Jawaban & Rubrik Penilaian</span>
+              <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+            </summary>
+            <div class="px-4 py-3 bg-white border-t border-slate-100 text-slate-700 whitespace-pre-line leading-relaxed font-sans text-[11px]">
+              ${q.answer}
+            </div>
+          </details>
+        `;
+        container.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    function openCustomQuestionModal() {
+      document.getElementById('modal-add-soal').classList.remove('hidden');
+      document.getElementById('modal-add-soal').classList.add('flex');
+    }
+
+    function closeCustomQuestionModal() {
+      document.getElementById('modal-add-soal').classList.add('hidden');
+      document.getElementById('modal-add-soal').classList.remove('flex');
+      document.getElementById('form-new-question').reset();
+    }
+
+    function saveCustomQuestion(e) {
+      e.preventDefault();
+      const newQ = {
+        id: "soal_custom_" + Date.now(),
+        grade: document.getElementById('new-q-grade').value,
+        type: document.getElementById('new-q-type').value,
+        level: document.getElementById('new-q-level').value,
+        topic: document.getElementById('new-q-topic').value,
+        stimulus: document.getElementById('new-q-stimulus').value.trim(),
+        question: document.getElementById('new-q-question').value.trim(),
+        answer: document.getElementById('new-q-answer').value.trim(),
+      };
+
+      customQuestions.unshift(newQ);
+      saveStateToLocalStorage();
+      renderQuestions();
+      closeCustomQuestionModal();
+      showToast("Butir soal asesmen baru berhasil disimpan!", "check-circle");
+      triggerAutoSyncToGoogleSheets();
+    }
+
+    function generateExamPaper() {
+      const gradeFilter = document.getElementById('filter-soal-grade').value;
+      const questions = getAllQuestions().filter(q => (gradeFilter === 'all') || (q.grade === gradeFilter));
+
+      if (questions.length === 0) {
+        showToast("Pilih filter kelas yang memiliki butir soal sebelum mencetak!", "alert-circle");
+        return;
+      }
+
+      const printArea = document.getElementById('print-area');
+      let questionsHTML = '';
+
+      questions.forEach((q, idx) => {
+        questionsHTML += `
+          <div style="margin-bottom: 20px; page-break-inside: avoid; font-size: 12px; line-height: 1.5;">
+            <div style="font-weight: bold; margin-bottom: 4px;">
+              ${idx + 1}. [${q.topic} - ${q.level}]
+            </div>
+            ${q.stimulus ? `<div style="background: #f9f9f9; border-left: 3px solid #333; padding: 6px 10px; margin-bottom: 6px; font-style: italic;">${q.stimulus}</div>` : ''}
+            <div style="margin-bottom: 8px;">${q.question}</div>
+            <div style="border-bottom: 1px dashed #ccc; padding-bottom: 12px; margin-bottom: 6px; color: #777; font-size: 10px;">
+              [Lembar Jawab Peserta Didik]
+            </div>
+          </div>
+        `;
+      });
+
+      const gradeLabel = gradeFilter === 'all' ? 'X, XI, XII' : `KELAS ${gradeFilter}`;
+
+      printArea.innerHTML = `
+        <div style="font-family: Arial, sans-serif;">
+          <div style="text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 16px;">
+            <h2 style="margin: 0; font-size: 15px; text-transform: uppercase;">PEMERINTAH PROVINSI DINAS PENDIDIKAN</h2>
+            <h1 style="margin: 2px 0; font-size: 17px;">SMA NEGERI INDONESIA JAYA</h1>
+            <p style="margin: 0; font-size: 11px;">Jalan Pendidikan Teladan No. 1 • Telp: (021) 889977</p>
+          </div>
+
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; font-size: 14px; text-transform: uppercase;">NASKAH ASESMEN SUMATIF / FORMATIF</h3>
+            <p style="margin: 2px 0; font-size: 11px;">Mata Pelajaran: Bahasa Indonesia | Tingkat: ${gradeLabel} | Waktu: 90 Menit</p>
+          </div>
+
+          <div style="border: 1px solid #000; padding: 8px; margin-bottom: 20px; font-size: 11px; display: flex; justify-content: space-between;">
+            <div>
+              <span>Nama Peserta: .....................................................</span><br>
+              <span>Nomor Induk Siswa: .....................................................</span>
+            </div>
+            <div>
+              <span>Kelas / Ruang: ...................................</span><br>
+              <span>Hari / Tanggal: ...................................</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 10px;">
+            ${questionsHTML}
+          </div>
+        </div>
+      `;
+
+      printArea.classList.remove('hidden');
+      window.print();
+      printArea.classList.add('hidden');
+    }
+
+    // Reset Data ke default
+    function promptResetAllData() {
+      showCustomConfirm(
+        "Reset Semua Data?",
+        "Semua perubahan kelas, nama siswa, dan riwayat presensi akan dikembalikan ke data simulasi awal bawaan.",
+        () => {
+          localStorage.removeItem("sim_guru_classes");
+          localStorage.removeItem("sim_guru_students");
+          localStorage.removeItem("sim_guru_attendance");
+          localStorage.removeItem("sim_guru_questions");
+          location.reload();
+        }
+      );
+    }
+
+    window.onload = function() {
+      initAppState();
+    };
+  </script>
+</body>
+</html>
